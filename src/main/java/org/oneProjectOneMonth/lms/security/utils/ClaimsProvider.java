@@ -4,7 +4,7 @@
  */
 package org.oneProjectOneMonth.lms.security.utils;
 
-import org.oneProjectOneMonth.lms.api.user.model.User;
+import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 
 import java.util.HashMap;
 import java.util.Map;
