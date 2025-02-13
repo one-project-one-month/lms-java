@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Eclipse ###
+.metadata/
+.settings/
+bin/
+tmp/
