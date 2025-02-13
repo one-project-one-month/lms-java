@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/${api.base.path}/auth")
+@RequestMapping("/${api.base.path}/${api.auth.base.path}")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
@@ -29,7 +29,7 @@ public class AuthController {
     private final AuthService authService;
     public final JwtService jwtService;
 
-    @PostMapping("/login")
+    @PostMapping("/${api.auth.login}")
     public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         log.info("Received login attempt for email: {}", loginRequest.getEmail());
 
@@ -44,7 +44,7 @@ public class AuthController {
         return ResponseUtil.buildResponse(request, response, 0L);
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/${api.auth.logout}")
     public ResponseEntity<ApiResponse> logout(
             @RequestHeader(value = "Authorization", required = false) String accessToken,
             HttpServletRequest request) {
@@ -77,7 +77,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/register")
+    @PostMapping("/${api.auth.register}")
     public ResponseEntity<ApiResponse> register(@Validated @RequestBody RegisterRequest registerRequest,
             HttpServletRequest request) {
         log.info("Received registration request for email: {}", registerRequest.getEmail());
@@ -93,7 +93,7 @@ public class AuthController {
         return ResponseUtil.buildResponse(request, response, 0L);
     }
 
-    @PostMapping("/refresh")
+    @PostMapping("/${api.auth.token-refresh}")
     public ResponseEntity<ApiResponse> refresh(@Validated @RequestBody RefreshTokenData refreshTokenData,
             HttpServletRequest request) {
         log.info("Received token refresh request");
@@ -109,7 +109,7 @@ public class AuthController {
         return ResponseUtil.buildResponse(request, response, 0L);
     }
 
-    @GetMapping("/me")
+    @GetMapping("/${api.auth.get-current-user}")
     public ResponseEntity<ApiResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader,
             HttpServletRequest request) {
         log.info("Fetching current authenticated user");
