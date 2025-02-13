@@ -2,7 +2,7 @@
  * @Author : Thant Htoo Aung
  * @Date : 2/10/2025
  */
-package org.oneProjectOneMonth.lms.security.controller;
+package org.oneProjectOneMonth.lms.security.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
