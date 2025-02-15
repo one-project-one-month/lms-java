@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
 import org.oneProjectOneMonth.lms.feature.token.domain.model.Token;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Inheritance(strategy = InheritanceType.JOINED)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,4 +53,16 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false, unique = true, length = 15)
+    private String phone;
+
+    @Column(nullable = false)
+    private LocalDate dob;
+
+    @Column(nullable = false, length = 500)
+    private String address;
+
+    @Column(nullable = false)
+    private String imageUrl;
 }
