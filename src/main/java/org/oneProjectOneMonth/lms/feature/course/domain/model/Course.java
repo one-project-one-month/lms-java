@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.category.domain.model.Category;
-import org.oneProjectOneMonth.lms.feature.social.domain.model.SocialLink;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,11 +45,19 @@ public class Course {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private SocialLink socialLink;
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
