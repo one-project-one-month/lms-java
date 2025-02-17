@@ -32,8 +32,9 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     private static final String ROLE_PREFIX = "ROLE_";
-    private static final String ROLE_ADMIN = ROLE_PREFIX + "ADMIN";
-    private static final String ROLE_USER = ROLE_PREFIX + "USER";
+    private static final String ADMIN = ROLE_PREFIX + "ADMIN";
+    private static final String INSTRUCTOR = ROLE_PREFIX + "INSTRUCTOR";
+    private static final String STUDENT = ROLE_PREFIX + "STUDENT";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -53,11 +54,9 @@ public class SecurityConfig {
     private void configureAuthorization(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/public/**", "/api/v1/users/change-password").permitAll()
-
-                .requestMatchers("/api/v1/users/**").access(hasRole(ROLE_USER))
-                .requestMatchers("/api/v1/admin/**").access(hasRole(ROLE_ADMIN))
-
+                .requestMatchers("/api/v1/public/**", "/api/v1/users/change-password","/api/v1/users").permitAll()
+                .requestMatchers("/api/v1/users/**").access(hasRole(ADMIN))
+                .requestMatchers("api/v1/courses/**").access(hasRole(INSTRUCTOR))
                 .anyRequest().authenticated();
     }
 

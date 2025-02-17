@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
 import org.oneProjectOneMonth.lms.feature.token.domain.model.Token;
 
@@ -34,6 +35,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "role_id", nullable = false)
+    private Long roleId;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "user_roles",
@@ -41,7 +45,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles;
-    
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Token token;
 
@@ -57,8 +61,9 @@ public class User {
     private String profilePhoto;
 
     @Column(nullable = false, name = "is_available")
-    private boolean available = false;
+    private boolean available;
 
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
