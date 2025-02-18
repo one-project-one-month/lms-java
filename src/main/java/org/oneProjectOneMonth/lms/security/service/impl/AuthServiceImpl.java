@@ -62,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
         String roleName = roleList.stream()
                 .map(role -> role.getName().name())
                 .findFirst()
-                .orElse("ROLE_USER");
+                .orElse("ADMIN");
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             log.warn("Invalid password for user: {}", loginRequest.getEmail());
@@ -112,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
+        Role userRole = roleRepository.findByName(RoleName.ADMIN)
                 .orElseThrow(() -> new RuntimeException("Role not found in database!"));
         log.info("Assigning role: {}", userRole.getName());
 
