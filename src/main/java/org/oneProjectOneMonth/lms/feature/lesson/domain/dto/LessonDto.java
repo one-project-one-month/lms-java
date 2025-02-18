@@ -19,5 +19,5 @@ public class LessonDto {
     private boolean available;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Long courseId; 
+   
 }

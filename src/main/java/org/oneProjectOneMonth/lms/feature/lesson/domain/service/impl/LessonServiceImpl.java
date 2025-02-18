@@ -94,7 +94,7 @@ public class LessonServiceImpl implements LessonService {
         try {
             log.info("Updating lesson with ID: {}", lessonId);
             Course course = courseRepository.findById(updateRequest.getCourseId())
-                    .orElseThrow(() -> new EntityNotFoundException("Course not found with ID: " + createLessonRequest.getCourseId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Course not found with ID: " + updateRequest.getCourseId()));
 
 
             Lesson lesson = EntityUtil.getEntityById(lessonRepository, lessonId);
