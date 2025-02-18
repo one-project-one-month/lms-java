@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://sql.freedb.tech:3306/freedb_learning_management_system_db
+      SPRING_DATASOURCE_USERNAME: freedb_OneProjectOneMonth
+      SPRING_DATASOURCE_PASSWORD: g2kGPmZP!GMcNtX
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8081:8081"
