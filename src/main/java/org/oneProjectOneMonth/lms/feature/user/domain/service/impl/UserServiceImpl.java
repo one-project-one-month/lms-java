@@ -1,9 +1,11 @@
 package org.oneProjectOneMonth.lms.feature.user.domain.service.impl;
 
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
@@ -11,25 +13,20 @@ import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
 import org.oneProjectOneMonth.lms.feature.student.domain.model.Student;
 import org.oneProjectOneMonth.lms.feature.student.domain.repository.StudentRepository;
-import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
+import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
-import org.oneProjectOneMonth.lms.config.response.dto.PaginatedResponse;
-import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
-import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -121,27 +118,29 @@ public class UserServiceImpl implements UserService {
     public void changePassword(String oldPassword, String newPassword, String authHeader) throws Exception {
         log.info("Initiating password change for authenticated user.");
 
-        UserDto userDto = userUtil.getCurrentUserDto(authHeader);
-        User currentUser = EntityUtil.getEntityById(userRepository, userDto.getId());
+		UserDto userDto = userUtil.getCurrentUserDto(authHeader);
+		User currentUser = EntityUtil.getEntityById(userRepository, userDto.getId());
 
-        if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
-            log.warn("Password change failed: Incorrect old password for user ID {}", currentUser.getId());
-            throw new IllegalArgumentException("Incorrect old password.");
-        }
+		if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
+			log.warn("Password change failed: Incorrect old password for user ID {}", currentUser.getId());
+			throw new IllegalArgumentException("Incorrect old password.");
+		}
 
-        if (!PasswordValidatorUtil.isValid(newPassword)) {
-            log.warn("Password change failed: Weak password provided.");
-            throw new IllegalArgumentException("Password does not meet security requirements.");
-        }
+		if (!PasswordValidatorUtil.isValid(newPassword)) {
+			log.warn("Password change failed: Weak password provided.");
+			throw new IllegalArgumentException("Password does not meet security requirements.");
+		}
 
-        currentUser.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(currentUser);
+		currentUser.setPassword(passwordEncoder.encode(newPassword));
+		userRepository.save(currentUser);
 
-        log.info("Password changed successfully for user ID {}", currentUser.getId());
-    }
+		log.info("Password changed successfully for user ID {}", currentUser.getId());
+	}
 
-    @Override
-    public boolean usernameExists(String username) {
-        return userRepository.countByUsername(username) > 0;
-    }
+	@Override
+	public boolean usernameExists(String username) {
+		return userRepository.countByUsername(username) > 0;
+	}
+
+	
 }

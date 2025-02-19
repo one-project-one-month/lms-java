@@ -11,7 +11,7 @@ public interface UserService {
 
     List<CreateUserResponse> getAllUsers();
 
-    void changePassword(String oldPassword, String newPassword, String authHeader) throws Exception;
+	void changePassword(String oldPassword, String newPassword, String authHeader) throws Exception;
 
-    boolean usernameExists(String username);
+	boolean usernameExists(String username);
 }
