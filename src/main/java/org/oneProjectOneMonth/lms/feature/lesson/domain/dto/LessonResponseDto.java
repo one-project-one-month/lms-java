@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LessonDto {
+public class LessonResponseDto {
     private Long id;
     private String title;
     private String videoUrl;
@@ -19,5 +19,6 @@ public class LessonDto {
     private boolean available;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long courseId;
    
 }
