@@ -11,15 +11,11 @@ import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
-import org.oneProjectOneMonth.lms.config.response.dto.PaginatedResponse;
 import org.oneProjectOneMonth.lms.config.response.utils.ResponseUtil;
-import org.oneProjectOneMonth.lms.config.utils.PaginationMetaUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,52 +41,42 @@ public class UserController {
     }
 
     @PostMapping("/${api.user.change-password}")
-    public ResponseEntity<ApiResponse> changePassword(
+    public ResponseEntity<ApiResponseDTO<Boolean>> changePassword(
             @Valid @RequestBody ChangePasswordRequest changePasswordRequest,
-            HttpServletRequest request,
             @RequestHeader("Authorization") String authHeader) throws Exception {
 
         log.info("Password change request received for authenticated user.");
 
         if (!PasswordValidatorUtil.isValid(changePasswordRequest.getNewPassword())) {
             log.warn("Password change failed: Weak password attempt.");
-            return ResponseUtil.buildResponse(request, ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .data(false)
-                    .message("New password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.")
-                    .build(), 0L);
+            return ResponseUtil.buildResponse(
+                    new ApiResponseDTO<>(false, "New password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character."),
+                    HttpStatus.BAD_REQUEST
+            );
         }
 
         userService.changePassword(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword(), authHeader);
 
         log.info("Password changed successfully.");
-
-        ApiResponse successResponse = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(true)
-                .message("Password changed successfully")
-                .build();
-
-        return ResponseUtil.buildResponse(request, successResponse, 0L);
+        return ResponseUtil.buildResponse(
+                new ApiResponseDTO<>(true, "Password changed successfully"),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/${api.user.check-username-exists}")
-    public ResponseEntity<ApiResponse> checkUsernameExists(
-            @RequestParam("username") String username, HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> checkUsernameExists(
+            @RequestParam("username") String username) {
 
         log.info("Checking existence of username: {}", username);
 
         boolean exists = userService.usernameExists(username);
 
-        ApiResponse response = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of("username", username, "exists", exists))
-                .message(exists ? "Username already taken" : "Username available")
-                .build();
+        Map<String, Object> data = Map.of("username", username, "exists", exists);
 
-        return ResponseUtil.buildResponse(request, response, 0L);
+        return ResponseUtil.buildResponse(
+                new ApiResponseDTO<>(data, exists ? "Username already taken" : "Username available"),
+                HttpStatus.OK
+        );
     }
 }
