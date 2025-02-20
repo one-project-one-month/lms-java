@@ -7,8 +7,7 @@ package org.oneProjectOneMonth.lms.security.api;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
-import org.oneProjectOneMonth.lms.config.response.utils.ResponseUtil;
+import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
 import org.oneProjectOneMonth.lms.security.dto.RefreshTokenData;
 import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
@@ -17,8 +16,6 @@ import org.oneProjectOneMonth.lms.security.service.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/${api.base.path}/${api.auth.base.path}")
@@ -30,44 +27,29 @@ public class AuthController {
     public final JwtService jwtService;
 
     @PostMapping("/${api.auth.login}")
-    public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         log.info("Received login attempt for email: {}", loginRequest.getEmail());
 
-        ApiResponse response = authService.authenticateUser(loginRequest);
+        Object responseData = authService.authenticateUser(loginRequest);
 
-        if (response.getSuccess() == 1) {
-            log.info("Login successful for user: {}", loginRequest.getEmail());
-        } else {
-            log.warn("Login failed for user: {}", loginRequest.getEmail());
-        }
-
-        return ResponseUtil.buildResponse(request, response, 0L);
+        log.info(responseData != null ? "Login successful for user: {}" : "Login failed for user: {}", loginRequest.getEmail());
+        return ResponseEntity.ok(new ApiResponseDTO<>(responseData, responseData != null ? "Login successful" : "Login failed"));
     }
 
     @PostMapping("/${api.auth.logout}")
-    public ResponseEntity<ApiResponse> logout(
-            @RequestHeader(value = "Authorization", required = false) String accessToken,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<Boolean>> logout(
+            @RequestHeader(value = "Authorization", required = false) String accessToken) {
         log.info("Received logout request");
 
-        if ((accessToken == null || !accessToken.startsWith("Bearer "))) {
-
+        if (accessToken == null || !accessToken.startsWith("Bearer ")) {
             log.warn("Invalid or missing tokens in logout request");
             throw new SecurityException("Invalid or missing authorization tokens.");
         }
 
         try {
             authService.logout(accessToken);
-            ApiResponse response = ApiResponse.builder()
-                    .success(1)
-                    .code(200)
-                    .data(true)
-                    .message("Logout successful")
-                    .build();
-
             log.info("User logged out successfully");
-
-            return ResponseUtil.buildResponse(request, response, 0L);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Logout successful"));
         } catch (SecurityException ex) {
             log.warn("Logout failed due to security reasons: {}", ex.getMessage());
             throw ex;
@@ -78,45 +60,30 @@ public class AuthController {
     }
 
     @PostMapping("/${api.auth.register}")
-    public ResponseEntity<ApiResponse> register(@Validated @RequestBody RegisterRequest registerRequest,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> register(@Validated @RequestBody RegisterRequest registerRequest) {
         log.info("Received registration request for email: {}", registerRequest.getEmail());
 
-        ApiResponse response = authService.registerUser(registerRequest);
+        Object registeredUser = authService.registerUser(registerRequest);
 
-        if (response.getSuccess() == 1) {
-            log.info("User registered successfully: {}", registerRequest.getEmail());
-        } else {
-            log.warn("Registration failed for email: {}", registerRequest.getEmail());
-        }
-
-        return ResponseUtil.buildResponse(request, response, 0L);
+        log.info(registeredUser != null ? "User registered successfully: {}" : "Registration failed for email: {}", registerRequest.getEmail());
+        return ResponseEntity.ok(new ApiResponseDTO<>(registeredUser, registeredUser != null ? "Registration successful" : "Registration failed"));
     }
 
     @PostMapping("/${api.auth.token-refresh}")
-    public ResponseEntity<ApiResponse> refresh(@Validated @RequestBody RefreshTokenData refreshTokenData,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> refresh(@Validated @RequestBody RefreshTokenData refreshTokenData) {
         log.info("Received token refresh request");
 
-        ApiResponse response = authService.refreshToken(refreshTokenData.getRefreshToken());
+        Object refreshedToken = authService.refreshToken(refreshTokenData.getRefreshToken());
 
-        if (response.getSuccess() == 1) {
-            log.info("Token refreshed successfully");
-        } else {
-            log.warn("Token refresh failed");
-        }
-
-        return ResponseUtil.buildResponse(request, response, 0L);
+        log.info(refreshedToken != null ? "Token refreshed successfully" : "Token refresh failed");
+        return ResponseEntity.ok(new ApiResponseDTO<>(refreshedToken, refreshedToken != null ? "Token refreshed successfully" : "Token refresh failed"));
     }
 
     @GetMapping("/${api.auth.get-current-user}")
-    public ResponseEntity<ApiResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         log.info("Fetching current authenticated user");
 
-        double requestStartTime = System.currentTimeMillis();
-        ApiResponse response = authService.getCurrentUser(authHeader);
-
-        return ResponseUtil.buildResponse(request, response, requestStartTime);
+        Object currentUser = authService.getCurrentUser(authHeader);
+        return ResponseEntity.ok(new ApiResponseDTO<>(currentUser, "Fetched current user successfully"));
     }
 }

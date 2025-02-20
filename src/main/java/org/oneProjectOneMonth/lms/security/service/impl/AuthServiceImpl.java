@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
@@ -19,14 +20,12 @@ import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
 import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 import org.oneProjectOneMonth.lms.security.service.AuthService;
 import org.oneProjectOneMonth.lms.security.service.JwtService;
 import org.oneProjectOneMonth.lms.security.utils.ClaimsProvider;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
     private final ModelMapper modelMapper;
 
     @Override
-    public ApiResponse authenticateUser(LoginRequest loginRequest) {
+    public ApiResponseDTO<Map<String, Object>> authenticateUser(LoginRequest loginRequest) {
         log.info("Authenticating user with email: {}", loginRequest.getEmail());
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -66,11 +65,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             log.warn("Invalid password for user: {}", loginRequest.getEmail());
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.UNAUTHORIZED.value())
-                    .message("Invalid email or password")
-                    .build();
+            return new ApiResponseDTO<>("UNAUTHORIZED", "Invalid email or password");
         }
 
         log.info("User authenticated successfully: {}", loginRequest.getEmail());
@@ -87,29 +82,24 @@ public class AuthServiceImpl implements AuthService {
 
         TokenDto tokenDto = DtoUtil.map(refreshToken, TokenDto.class, modelMapper);
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of(
+        return new ApiResponseDTO<>(
+                Map.of(
                         "user", userDto,
                         "accessToken", tokenData.get("accessToken"),
-                        "refreshToken", tokenDto.getRefreshtoken()))
-                .message("You are successfully logged in!")
-                .build();
+                        "refreshToken", tokenDto.getRefreshtoken()
+                ),
+                "You are successfully logged in!"
+        );
     }
 
     @Override
     @Transactional
-    public ApiResponse registerUser(RegisterRequest registerRequest) {
+    public ApiResponseDTO<Map<String, Object>> registerUser(RegisterRequest registerRequest) {
         log.info("Registering new user with email: {}", registerRequest.getEmail());
 
         if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
             log.warn("Email already exists: {}", registerRequest.getEmail());
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.CONFLICT.value())
-                    .message("Email is already in use")
-                    .build();
+            return new ApiResponseDTO<>("CONFLICT", "Email is already in use", null);
         }
 
         Role userRole = roleRepository.findByName(RoleName.ADMIN)
@@ -145,15 +135,14 @@ public class AuthServiceImpl implements AuthService {
 
         UserDto userDto = DtoUtil.map(newUser, UserDto.class, modelMapper);
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.CREATED.value())
-                .data(Map.of(
+        return new ApiResponseDTO<>(
+                Map.of(
                         "user", userDto,
                         "accessToken", accessToken,
-                        "refreshToken", refreshToken))
-                .message("You have registered successfully.")
-                .build();
+                        "refreshToken", refreshToken
+                ),
+                "You have registered successfully."
+        );
     }
 
     private Map<String, Object> generateTokens(User user, String roleName) {
@@ -186,7 +175,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse refreshToken(String refreshToken) {
+    public ApiResponseDTO<Map<String, Object>> refreshToken(String refreshToken) {
         log.info("Validating refresh token");
 
         Claims claims;
@@ -194,12 +183,7 @@ public class AuthServiceImpl implements AuthService {
             claims = jwtService.validateToken(refreshToken);
         } catch (SecurityException ex) {
             log.warn("Invalid refresh token: {}", ex.getMessage());
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.UNAUTHORIZED.value())
-                    .data(ex.getMessage())
-                    .message("Invalid or expired refresh token")
-                    .build();
+            return new ApiResponseDTO<>("UNAUTHORIZED", "Invalid or expired refresh token", null);
         }
 
         String email = claims.getSubject();
@@ -207,12 +191,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (user == null) {
             log.warn("User not found for refresh token: {}", email);
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.UNAUTHORIZED.value())
-                    .data(false)
-                    .message("User not found")
-                    .build();
+            return new ApiResponseDTO<>("UNAUTHORIZED", "User not found", null);
         }
 
         log.info("Generating new access token for user: {}", email);
@@ -226,25 +205,20 @@ public class AuthServiceImpl implements AuthService {
         String newAccessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName, email,
                 15 * 60 * 1000);
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of("accessToken", newAccessToken))
-                .message("Access token refreshed successfully")
-                .build();
+        return new ApiResponseDTO<>(
+                Map.of("accessToken", newAccessToken),
+                "Access token refreshed successfully"
+        );
     }
 
     @Override
-    public ApiResponse getCurrentUser(String authHeader) {
+    public ApiResponseDTO<Map<String, Object>> getCurrentUser(String authHeader) {
         UserDto userDto = userUtil.getCurrentUserDto(authHeader);
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of(
-                        "user", userDto))
-                .message("User retrieved successfully")
-                .build();
+        return new ApiResponseDTO<>(
+                Map.of("user", userDto),
+                "User retrieved successfully"
+        );
     }
 
 }
