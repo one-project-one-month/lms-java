@@ -5,12 +5,11 @@
 package org.oneProjectOneMonth.lms.security.service.impl;
 
 import io.jsonwebtoken.Claims;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
-import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
 import org.oneProjectOneMonth.lms.feature.token.domain.dto.TokenDto;
 import org.oneProjectOneMonth.lms.feature.token.domain.model.Token;
@@ -19,14 +18,11 @@ import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
-import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 import org.oneProjectOneMonth.lms.security.service.AuthService;
 import org.oneProjectOneMonth.lms.security.service.JwtService;
 import org.oneProjectOneMonth.lms.security.utils.ClaimsProvider;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final ModelMapper modelMapper;
 
     @Override
-    public ApiResponse authenticateUser(LoginRequest loginRequest) {
+    public Map<String, Object> authenticateUser(LoginRequest loginRequest) {
         log.info("Authenticating user with email: {}", loginRequest.getEmail());
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -66,16 +62,10 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             log.warn("Invalid password for user: {}", loginRequest.getEmail());
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.UNAUTHORIZED.value())
-                    .message("Invalid email or password")
-                    .build();
+            throw new SecurityException("Invalid email or password");
         }
 
         log.info("User authenticated successfully: {}", loginRequest.getEmail());
-
-        UserDto userDto = DtoUtil.map(user, UserDto.class, modelMapper);
 
         Token refreshToken = tokenRepository.findByUser(user)
                 .orElseThrow(() -> {
@@ -87,76 +77,13 @@ public class AuthServiceImpl implements AuthService {
 
         TokenDto tokenDto = DtoUtil.map(refreshToken, TokenDto.class, modelMapper);
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of(
-                        "user", userDto,
-                        "accessToken", tokenData.get("accessToken"),
-                        "refreshToken", tokenDto.getRefreshtoken()))
-                .message("You are successfully logged in!")
-                .build();
+        return Map.of(
+                "accessToken", tokenData.get("accessToken"),
+                "refreshToken", tokenDto.getRefreshtoken()
+        );
     }
 
-    @Override
-    @Transactional
-    public ApiResponse registerUser(RegisterRequest registerRequest) {
-        log.info("Registering new user with email: {}", registerRequest.getEmail());
-
-        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-            log.warn("Email already exists: {}", registerRequest.getEmail());
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.CONFLICT.value())
-                    .message("Email is already in use")
-                    .build();
-        }
-
-        Role userRole = roleRepository.findByName(RoleName.ADMIN)
-                .orElseThrow(() -> new RuntimeException("Role not found in database!"));
-        log.info("Assigning role: {}", userRole.getName());
-
-        User newUser = User.builder()
-                .name(registerRequest.getName())
-                .username(userUtil.generateUniqueUsername(registerRequest.getName()))
-                .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .roles(Set.of(userRole))
-                .build();
-
-        userRepository.save(newUser);
-
-        Map<String, Object> tokenData = generateTokens(newUser, String.valueOf(userRole.getName()));
-
-        String accessToken = (String) tokenData.get("accessToken");
-        String refreshToken = (String) tokenData.get("refreshToken");
-
-        Instant expiredAt = Instant.now().plus(7, ChronoUnit.DAYS);
-
-        Token token = Token.builder()
-                .user(newUser)
-                .refreshtoken(refreshToken)
-                .expiredAt(expiredAt)
-                .build();
-
-        tokenRepository.save(token);
-
-        log.info("User registered successfully: {}", registerRequest.getEmail());
-
-        UserDto userDto = DtoUtil.map(newUser, UserDto.class, modelMapper);
-
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.CREATED.value())
-                .data(Map.of(
-                        "user", userDto,
-                        "accessToken", accessToken,
-                        "refreshToken", refreshToken))
-                .message("You have registered successfully.")
-                .build();
-    }
-
-    private Map<String, Object> generateTokens(User user, String roleName) {
+    public Map<String, Object> generateTokens(User user, String roleName) {
         log.debug("Generating tokens for user: {}", user.getEmail());
 
         String accessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName,
@@ -186,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse refreshToken(String refreshToken) {
+    public Map<String, Object> refreshToken(String refreshToken) {
         log.info("Validating refresh token");
 
         Claims claims;
@@ -194,12 +121,7 @@ public class AuthServiceImpl implements AuthService {
             claims = jwtService.validateToken(refreshToken);
         } catch (SecurityException ex) {
             log.warn("Invalid refresh token: {}", ex.getMessage());
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.UNAUTHORIZED.value())
-                    .data(ex.getMessage())
-                    .message("Invalid or expired refresh token")
-                    .build();
+            throw new SecurityException("Invalid or expired refresh token");
         }
 
         String email = claims.getSubject();
@@ -207,12 +129,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (user == null) {
             log.warn("User not found for refresh token: {}", email);
-            return ApiResponse.builder()
-                    .success(0)
-                    .code(HttpStatus.UNAUTHORIZED.value())
-                    .data(false)
-                    .message("User not found")
-                    .build();
+            throw new SecurityException("User not found");
         }
 
         log.info("Generating new access token for user: {}", email);
@@ -221,30 +138,30 @@ public class AuthServiceImpl implements AuthService {
         String roleName = roleList.stream()
                 .map(role -> role.getName().name())
                 .findFirst()
-                .orElse("ROLE_USER");
+                .orElse("ADMIN");
 
-        String newAccessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName, email,
-                15 * 60 * 1000);
+        Map<String, Object> newTokens = generateTokens(user, roleName);
+        String newAccessToken = newTokens.get("accessToken").toString();
+        String newRefreshToken = newTokens.get("refreshToken").toString();
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of("accessToken", newAccessToken))
-                .message("Access token refreshed successfully")
-                .build();
+        Token existingToken = tokenRepository.findByUser(user)
+                .orElseThrow(() -> new SecurityException("Token not found for user"));
+
+        existingToken.setRefreshtoken(newRefreshToken);
+        existingToken.setExpiredAt(Instant.now().plus(7, ChronoUnit.DAYS));
+        tokenRepository.save(existingToken);
+
+        return Map.of(
+                "accessToken", newAccessToken,
+                "refreshToken", newRefreshToken
+        );
     }
 
     @Override
-    public ApiResponse getCurrentUser(String authHeader) {
+    public Map<String, Object> getCurrentUser(String authHeader) {
         UserDto userDto = userUtil.getCurrentUserDto(authHeader);
 
-        return ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(Map.of(
-                        "user", userDto))
-                .message("User retrieved successfully")
-                .build();
+        return Map.of("user", userDto);
     }
 
 }

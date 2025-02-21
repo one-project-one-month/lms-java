@@ -1,111 +1,58 @@
 package org.oneProjectOneMonth.lms.feature.lesson.api;
 
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.feature.lesson.domain.dto.CreateLessonRequest;
+import org.oneProjectOneMonth.lms.feature.lesson.domain.dto.LessonResponseDto;
 import org.oneProjectOneMonth.lms.feature.lesson.domain.service.LessonService;
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
-import org.oneProjectOneMonth.lms.config.response.utils.ResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/${api.base.path}/${api.lesson.base.path}")
 @RequiredArgsConstructor
+@Tag(name = "Lesson", description = "Lesson API")
 @Slf4j
 public class LessonController {
-
     private final LessonService lessonService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse> createLesson(
-            @Validated @RequestBody CreateLessonRequest createLessonRequest,
-            HttpServletRequest request
-    ) throws Exception {
+    public ResponseEntity<ApiResponseDTO<LessonResponseDto>> createLesson(@RequestBody CreateLessonRequest createLessonRequest) throws Exception {
         log.info("Creating new lesson: {}", createLessonRequest.getTitle());
-
-        Object createdLesson = lessonService.createLesson(createLessonRequest);
-
-        log.info("Lesson created successfully: {}", createLessonRequest.getTitle());
-
-        ApiResponse successResponse = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.CREATED.value())
-                .data(createdLesson)
-                .message("Lesson created successfully")
-                .build();
-
-        return ResponseUtil.buildResponse(request, successResponse, 0L);
+        LessonResponseDto response = lessonService.createLesson(createLessonRequest);
+        return ResponseEntity.ok(new ApiResponseDTO<>(response, "Lesson created successfully"));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllLessons(HttpServletRequest request) throws Exception {
-        log.info("Retrieving all lessons");
-        Object lessons = lessonService.getAllLessons();
-
-        ApiResponse successResponse = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(lessons != null ? lessons : Collections.emptyList())
-                .message("Lessons retrieved successfully")
-                .build();
-
-        return ResponseUtil.buildResponse(request, successResponse, 0L);
+    public ResponseEntity<ApiResponseDTO<List<LessonResponseDto>>> getAllLessons() throws Exception {
+        log.info("Fetching all lessons");
+        List<LessonResponseDto> lessons = lessonService.getAllLessons();
+        return ResponseEntity.ok(new ApiResponseDTO<>(lessons, "All lessons fetched successfully"));
     }
 
     @GetMapping("/{lessonId}")
-    public ResponseEntity<ApiResponse> getLessonById(
-            @PathVariable Long lessonId, HttpServletRequest request) throws Exception {
-        log.info("Retrieving lesson with ID: {}", lessonId);
-        Object lesson = lessonService.getLessonById(lessonId);
-
-        ApiResponse successResponse = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(lesson)
-                .message("Lesson retrieved successfully")
-                .build();
-
-        return ResponseUtil.buildResponse(request, successResponse, 0L);
+    public ResponseEntity<ApiResponseDTO<LessonResponseDto>> getLessonById(@PathVariable Long lessonId) throws Exception {
+        log.info("Fetching lesson with ID: {}", lessonId);
+        LessonResponseDto lesson = lessonService.getLessonById(lessonId);
+        return ResponseEntity.ok(new ApiResponseDTO<>(lesson, "Lesson fetched successfully"));
     }
 
-    
     @PutMapping("/{lessonId}")
-    public ResponseEntity<ApiResponse> updateLesson(
-            @PathVariable Long lessonId,
-            @Valid @RequestBody CreateLessonRequest updateRequest,
-            HttpServletRequest request) throws Exception {
+    public ResponseEntity<ApiResponseDTO<LessonResponseDto>> updateLesson(@PathVariable Long lessonId, @RequestBody CreateLessonRequest updateRequest) throws Exception {
         log.info("Updating lesson with ID: {}", lessonId);
-        Object updatedLesson = lessonService.updateLesson(lessonId, updateRequest);
-
-        ApiResponse successResponse = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .data(updatedLesson)
-                .message("Lesson updated successfully")
-                .build();
-
-        return ResponseUtil.buildResponse(request, successResponse, 0L);
+        LessonResponseDto updatedLesson = lessonService.updateLesson(lessonId, updateRequest);
+        return ResponseEntity.ok(new ApiResponseDTO<>(updatedLesson, "Lesson updated successfully"));
     }
 
     @DeleteMapping("/{lessonId}")
-    public ResponseEntity<ApiResponse> deleteLesson(@PathVariable Long lessonId, HttpServletRequest request) throws Exception {
+    public ResponseEntity<ApiResponseDTO<String>> deleteLesson(@PathVariable Long lessonId) throws Exception {
         log.info("Deleting lesson with ID: {}", lessonId);
         lessonService.deleteLesson(lessonId);
-
-        ApiResponse successResponse = ApiResponse.builder()
-                .success(1)
-                .code(HttpStatus.OK.value())
-                .message("Lesson deleted successfully")
-                .build();
-
-        return ResponseUtil.buildResponse(request, successResponse, 0L);
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponseDTO<>("Lesson deleted successfully"));
     }
 }
