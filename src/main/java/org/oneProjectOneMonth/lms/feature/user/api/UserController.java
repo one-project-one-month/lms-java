@@ -3,7 +3,6 @@ package org.oneProjectOneMonth.lms.feature.user.api;
 import java.util.List;
 import java.util.Map;
 
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.config.response.utils.ResponseUtil;
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.ChangePasswordRequest;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,44 +45,44 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponseDTO<>(users));
     }
 
-	@PostMapping("/${api.user.change-password}")
-	public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest,
-			HttpServletRequest request, @RequestHeader("Authorization") String authHeader) throws Exception {
+    @PostMapping("/${api.user.change-password}")
+    public ResponseEntity<ApiResponseDTO<Boolean>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest changePasswordRequest,
+            @RequestHeader("Authorization") String authHeader) throws Exception {
 
 		log.info("Password change request received for authenticated user.");
 
-		if (!PasswordValidatorUtil.isValid(changePasswordRequest.getNewPassword())) {
-			log.warn("Password change failed: Weak password attempt.");
-			return ResponseUtil.buildResponse(request,
-					ApiResponse.builder().success(0).code(HttpStatus.BAD_REQUEST.value()).data(false).message(
-							"New password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.")
-							.build(),
-					0L);
-		}
+        if (!PasswordValidatorUtil.isValid(changePasswordRequest.getNewPassword())) {
+            log.warn("Password change failed: Weak password attempt.");
+            return ResponseUtil.buildResponse(
+                    new ApiResponseDTO<>(false, "New password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character."),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
 
 		userService.changePassword(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword(),
 				authHeader);
 
-		log.info("Password changed successfully.");
+        log.info("Password changed successfully.");
+        return ResponseUtil.buildResponse(
+                new ApiResponseDTO<>(true, "Password changed successfully"),
+                HttpStatus.OK
+        );
+    }
 
-		ApiResponse successResponse = ApiResponse.builder().success(1).code(HttpStatus.OK.value()).data(true)
-				.message("Password changed successfully").build();
-
-		return ResponseUtil.buildResponse(request, successResponse, 0L);
-	}
-
-	@GetMapping("/${api.user.check-username-exists}")
-	public ResponseEntity<ApiResponse> checkUsernameExists(@RequestParam("username") String username,
-			HttpServletRequest request) {
+    @GetMapping("/${api.user.check-username-exists}")
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> checkUsernameExists(
+            @RequestParam("username") String username) {
 
 		log.info("Checking existence of username: {}", username);
 
 		boolean exists = userService.usernameExists(username);
 
-		ApiResponse response = ApiResponse.builder().success(1).code(HttpStatus.OK.value())
-				.data(Map.of("username", username, "exists", exists))
-				.message(exists ? "Username already taken" : "Username available").build();
+        Map<String, Object> data = Map.of("username", username, "exists", exists);
 
-		return ResponseUtil.buildResponse(request, response, 0L);
-	}
+        return ResponseUtil.buildResponse(
+                new ApiResponseDTO<>(data, exists ? "Username already taken" : "Username available"),
+                HttpStatus.OK
+        );
+    }
 }
