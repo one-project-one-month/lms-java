@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
@@ -24,7 +23,6 @@ import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserRespons
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
@@ -73,7 +71,7 @@ public class UserServiceImpl implements UserService {
 		User user = modelMapper.map(request, User.class);
 		user.setPassword(passwordEncoder.encode(request.password()));
 		user.setRoles(roles);
-//		user.setRoleId(role.getId());
+		user.setRoleId(role.getId());
 
 		// Directly Save ADMIN Role
 		if (role.getName().equals(RoleName.ADMIN)) {
