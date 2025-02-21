@@ -2,8 +2,8 @@ package org.oneProjectOneMonth.lms.feature.enrollment.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.oneProjectOneMonth.lms.feature.enrollment.dto.EnrollmentRequestDto;
-import org.oneProjectOneMonth.lms.feature.enrollment.dto.EnrollmentResponseDto;
+import org.oneProjectOneMonth.lms.feature.enrollment.domain.dto.EnrollmentRequestDto;
+import org.oneProjectOneMonth.lms.feature.enrollment.domain.dto.EnrollmentResponseDto;
 import org.oneProjectOneMonth.lms.feature.enrollment.domain.service.EnrollmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class EnrollmentController {
     private final EnrollmentService enrollmentService;
 
     @PostMapping
-    public ResponseEntity<EnrollmentResponseD> enrollStudent(@RequestBody EnrollmentRequestDto request) {
+    public ResponseEntity<EnrollmentResponseDto> enrollStudent(@RequestBody EnrollmentRequestDto request) {
         log.info("Enrolling student {} to course {}", request.getStudentId(), request.getCourseId());
         EnrollmentResponseDto response = enrollmentService.enrollStudent(request);
         return ResponseEntity.ok(response);

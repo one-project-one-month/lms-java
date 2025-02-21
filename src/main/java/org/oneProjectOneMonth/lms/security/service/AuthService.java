@@ -4,18 +4,20 @@
  */
 package org.oneProjectOneMonth.lms.security.service;
 
-import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
+import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
 import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 
-public interface AuthService {
-    ApiResponse authenticateUser(LoginRequest loginRequest);
+import java.util.Map;
 
-    ApiResponse registerUser(RegisterRequest registerRequest);
+public interface AuthService {
+    ApiResponseDTO<Map<String, Object>> authenticateUser(LoginRequest loginRequest);
+
+    ApiResponseDTO<Map<String, Object>> registerUser(RegisterRequest registerRequest);
 
     void logout(String accessToken);
 
-    ApiResponse refreshToken(String refreshToken);
+    ApiResponseDTO<Map<String, Object>> refreshToken(String refreshToken);
 
-    ApiResponse getCurrentUser(String authHeader);
+    ApiResponseDTO<Map<String, Object>> getCurrentUser(String authHeader);
 }

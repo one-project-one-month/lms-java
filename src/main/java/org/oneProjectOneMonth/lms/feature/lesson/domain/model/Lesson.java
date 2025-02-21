@@ -28,10 +28,23 @@ public class Lesson {
 
     private String videoUrl;
     private String lessonDetail;
-    private boolean isAvailable;
+
+    @Column(nullable = false, name = "is_available")
+    private boolean available;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

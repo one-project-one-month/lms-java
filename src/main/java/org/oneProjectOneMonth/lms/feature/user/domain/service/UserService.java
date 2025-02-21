@@ -1,11 +1,15 @@
 package org.oneProjectOneMonth.lms.feature.user.domain.service;
 
-import org.oneProjectOneMonth.lms.feature.user.domain.dto.CreateUserRequest;
+import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
+import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
+
+import java.util.List;
 
 public interface UserService {
-    Object retrieveUsers(int page, int limit) throws Exception;
 
-    Object createUser(CreateUserRequest createUserRequest) throws Exception;
+    CreateUserResponse signUp(CreateUserRequest request);
+
+    List<CreateUserResponse> getAllUsers();
 
     void changePassword(String oldPassword, String newPassword, String authHeader) throws Exception;
 

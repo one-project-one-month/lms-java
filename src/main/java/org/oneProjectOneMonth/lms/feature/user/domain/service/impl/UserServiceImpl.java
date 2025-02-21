@@ -4,17 +4,21 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
+import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
-import org.oneProjectOneMonth.lms.feature.user.domain.dto.CreateUserRequest;
+import org.oneProjectOneMonth.lms.feature.student.domain.model.Student;
+import org.oneProjectOneMonth.lms.feature.student.domain.repository.StudentRepository;
+import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
+import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
-import org.oneProjectOneMonth.lms.config.exception.DuplicateEntityException;
 import org.oneProjectOneMonth.lms.config.response.dto.PaginatedResponse;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
 import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
@@ -22,8 +26,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,65 +41,80 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserUtil userUtil;
+    private final StudentRepository studentRepository;
+    private final InstructorRepository instructorRepository;
+
 
     @Override
-    public Object retrieveUsers(int page, int limit) throws Exception {
-        try {
-            log.info("Fetching users from database with page: {}, limit: {}", page, limit);
-
-            int offset = (page - 1) * limit;
-            List<User> users = userRepository.findUsersWithPagination(offset, limit);
-
-            long totalItems = userRepository.countUsers();
-            int lastPage = (int) Math.ceil((double) totalItems / limit);
-
-            List<UserDto> userList = DtoUtil.mapList(users, UserDto.class, modelMapper);
-
-            log.info("Fetched {} users, total users in system: {}", users.size(), totalItems);
-
-            return PaginatedResponse.<UserDto>builder()
-                    .items(userList != null ? userList : Collections.emptyList())
-                    .totalItems(totalItems)
-                    .lastPage(lastPage)
-                    .build();
-        } catch (Exception e) {
-            log.error("Error retrieving users: {}", e.getMessage());
-            throw new Exception("Error retrieving users: " + e.getMessage());
+    public CreateUserResponse signUp(CreateUserRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Email already exists.");
         }
+
+        if (userRepository.existsByPhone(request.phone())) {
+            throw new IllegalArgumentException("Phone number already exists.");
+        }
+
+        if (userRepository.existsByUsername(request.username())) {
+            throw new IllegalArgumentException("Username already exists.");
+        }
+
+        if (request.nrc() != null && instructorRepository.existsByNrc(request.nrc())) {
+            throw new IllegalArgumentException("NRC already exists.");
+        }
+
+        Role role = roleRepository.findByName(RoleName.valueOf(request.roles().toUpperCase()))
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + request.roles()));
+
+        Set<Role> roles = Set.of(role);
+        User user = modelMapper.map(request, User.class);
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setRoles(roles);
+        user.setRoleId(role.getId());
+
+        // Directly Save ADMIN Role
+        if (role.getName().equals(RoleName.ADMIN)) {
+            User savedAdmin = userRepository.save(user);
+            log.info("Admin user created successfully: {}", savedAdmin);
+            return CreateUserResponse.fromUser(savedAdmin, null);
+        }
+
+        User savedUser = userRepository.save(user);
+        log.info("User created successfully: {}", savedUser);
+        Instructor instructor = null;
+
+        if (role.getName().equals(RoleName.STUDENT)) {
+            Student student = new Student();
+            student.setUser(savedUser);
+            studentRepository.save(student);
+        } else if (role.getName().equals(RoleName.INSTRUCTOR)) {
+            if (request.nrc() == null || request.eduBackground() == null) {
+                throw new IllegalArgumentException("NRC and Education Background are required for Instructors.");
+            }
+            instructor = new Instructor();
+            instructor.setUser(savedUser);
+            instructor.setNrc(request.nrc());
+            instructor.setEduBackground(request.eduBackground());
+            instructorRepository.save(instructor);
+        }
+        return CreateUserResponse.fromUser(savedUser, instructor);
     }
 
     @Override
-    public Object createUser(CreateUserRequest createUserRequest) throws Exception {
-        try {
-            log.info("Creating new user with email: {}", createUserRequest.getEmail());
+    public List<CreateUserResponse> getAllUsers() {
+        List<User> users = userRepository.findAll();
 
-            if (userRepository.findByEmail(createUserRequest.getEmail()).isPresent()) {
-                log.warn("Email already exists: {}", createUserRequest.getEmail());
-                throw new DuplicateEntityException("Email already exists: " + createUserRequest.getEmail());
+        return users.stream().map(user -> {
+            Instructor instructor = null;
+
+            if (user.getRoles().stream().anyMatch(role -> role.getName().equals(RoleName.INSTRUCTOR))) {
+                instructor = instructorRepository.findByUser(user).orElse(null);
             }
 
-            User user = modelMapper.map(createUserRequest, User.class);
-            String uniqueUsername = userUtil.generateUniqueUsername(createUserRequest.getName());
-            user.setUsername(uniqueUsername);
-
-            user.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
-
-            Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Role not found in database!"));
-            log.info("Assigning role: {}", userRole.getName());
-            user.setRoles(Set.of(userRole));
-
-            User savedUser = userRepository.save(user);
-
-            log.info("User created successfully with ID: {}", savedUser.getId());
-
-            return modelMapper.map(savedUser, UserDto.class);
-        } catch (DuplicateEntityException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
+            return CreateUserResponse.fromUser(user, instructor);
+        }).collect(Collectors.toList());
     }
+
 
     @Override
     @Transactional

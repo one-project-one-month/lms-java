@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.oneProjectOneMonth.lms.feature.course.domain.model.Course;
 
+import java.time.LocalDateTime;
+
 @Data
 @Entity
 @Builder
@@ -26,4 +28,20 @@ public class SocialLink {
     private String telegram;
     private String phone;
     private String email;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

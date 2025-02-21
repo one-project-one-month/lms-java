@@ -4,17 +4,15 @@
  */
 package org.oneProjectOneMonth.lms.security.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
@@ -26,13 +24,12 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("timestamp", Instant.now().toString());
-        responseBody.put("status", HttpServletResponse.SC_UNAUTHORIZED);
-        responseBody.put("error", "Unauthorized");
-        responseBody.put("message", "You are not authorized to access this resource.");
-        responseBody.put("path", request.getRequestURI());
+        ApiResponseDTO<Object> apiResponse = new ApiResponseDTO<>(
+                "Unauthorized",
+                "You are not authorized to access this resource.",
+                request.getRequestURI()
+        );
 
-        response.getWriter().write(objectMapper.writeValueAsString(responseBody));
+        response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 }
