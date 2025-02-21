@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.feature.admin.domain.model.Admin;
+import org.oneProjectOneMonth.lms.feature.admin.domain.repository.AdminRepository;
 import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
@@ -14,20 +16,28 @@ import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
 import org.oneProjectOneMonth.lms.feature.student.domain.model.Student;
 import org.oneProjectOneMonth.lms.feature.student.domain.repository.StudentRepository;
+import org.oneProjectOneMonth.lms.feature.token.domain.model.Token;
+import org.oneProjectOneMonth.lms.feature.token.domain.repository.TokenRepository;
+import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
+
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
-import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.request.UpdateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
+import org.oneProjectOneMonth.lms.security.service.impl.AuthServiceImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -38,13 +48,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserServiceImpl implements UserService {
 
-	private final UserRepository userRepository;
-	private final RoleRepository roleRepository;
-	private final ModelMapper modelMapper;
-	private final PasswordEncoder passwordEncoder;
-	private final UserUtil userUtil;
-	private final StudentRepository studentRepository;
-	private final InstructorRepository instructorRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final UserUtil userUtil;
+    private final StudentRepository studentRepository;
+    private final InstructorRepository instructorRepository;
+    private final AdminRepository adminRepository;
+    private final AuthServiceImpl  authService;
+    private final TokenRepository tokenRepository;
 
 	@Override
 	public CreateUserResponse signUp(CreateUserRequest request) {
@@ -71,21 +84,18 @@ public class UserServiceImpl implements UserService {
 		User user = modelMapper.map(request, User.class);
 		user.setPassword(passwordEncoder.encode(request.password()));
 		user.setRoles(roles);
-		user.setRoleId(role.getId());
-
-		// Directly Save ADMIN Role
-		if (role.getName().equals(RoleName.ADMIN)) {
-			User savedAdmin = userRepository.save(user);
-			log.info("Admin user created successfully: {}", savedAdmin);
-			return CreateUserResponse.fromUser(savedAdmin, null);
-		}
 
 		User savedUser = userRepository.save(user);
 		log.info("User created successfully: {}", savedUser);
 		Instructor instructor = null;
 
-		if (role.getName().equals(RoleName.STUDENT)) {
+		if(role.getName().equals(RoleName.ADMIN)){
+			Admin admin = new Admin();
+			user.setAvailable(true);
+			adminRepository.save(admin);
+		}else if (role.getName().equals(RoleName.STUDENT)) {
 			Student student = new Student();
+			user.setAvailable(true);
 			student.setUser(savedUser);
 			studentRepository.save(student);
 		} else if (role.getName().equals(RoleName.INSTRUCTOR)) {
@@ -94,10 +104,21 @@ public class UserServiceImpl implements UserService {
 			}
 			instructor = new Instructor();
 			instructor.setUser(savedUser);
+			user.setAvailable(false);
 			instructor.setNrc(request.nrc());
 			instructor.setEduBackground(request.eduBackground());
 			instructorRepository.save(instructor);
 		}
+
+		// Generate access and refresh tokens
+		Map<String, Object> tokens = authService.generateTokens(savedUser, role.getName().name());
+		String refreshToken = tokens.get("refreshToken").toString();
+
+		Token token = new Token();
+		token.setRefreshtoken(refreshToken);
+		token.setExpiredAt(Instant.now().plus(7, ChronoUnit.DAYS));
+		token.setUser(savedUser);
+		tokenRepository.save(token);
 		return CreateUserResponse.fromUser(savedUser, instructor);
 	}
 
