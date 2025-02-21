@@ -70,8 +70,6 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User authenticated successfully: {}", loginRequest.getEmail());
 
-        UserDto userDto = DtoUtil.map(user, UserDto.class, modelMapper);
-
         Token refreshToken = tokenRepository.findByUser(user)
                 .orElseThrow(() -> {
                     log.warn("Token not found for user: {}", loginRequest.getEmail());
@@ -84,7 +82,6 @@ public class AuthServiceImpl implements AuthService {
 
         return new ApiResponseDTO<>(
                 Map.of(
-                        "user", userDto,
                         "accessToken", tokenData.get("accessToken"),
                         "refreshToken", tokenDto.getRefreshtoken()
                 ),
