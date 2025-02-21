@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/${api.base.path}/${api.auth.base.path}")
 @RequiredArgsConstructor
@@ -33,7 +35,7 @@ public class AuthController {
     public ResponseEntity<ApiResponseDTO<Object>> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         log.info("Received login attempt for email: {}", loginRequest.getEmail());
 
-        Object responseData = authService.authenticateUser(loginRequest);
+        Map<String, Object> responseData = authService.authenticateUser(loginRequest);
 
         log.info(responseData != null ? "Login successful for user: {}" : "Login failed for user: {}", loginRequest.getEmail());
         return ResponseEntity.ok(new ApiResponseDTO<>(responseData, responseData != null ? "Login successful" : "Login failed"));
