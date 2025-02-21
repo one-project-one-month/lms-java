@@ -14,7 +14,8 @@ public interface CourseService {
 
     ApiResponseDTO<List<Course>> getAllCourses();
     ApiResponseDTO<Course> getCourseById(Long courseId);
-    ApiResponseDTO<Course> addCourse(Course course);
+    ApiResponseDTO<Course> addCourse(Course course, Long instructorId);
     ApiResponseDTO<Course> updateCourse(Long courseId, Course course);
     ApiResponseDTO<Boolean> deleteCourseByCourseId(Long courseId);
+    ApiResponseDTO<Course> ToggleAvailableCourse(Long courseId);
 }

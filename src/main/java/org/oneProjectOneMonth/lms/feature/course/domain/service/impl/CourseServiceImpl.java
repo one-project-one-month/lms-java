@@ -8,6 +8,8 @@ import org.oneProjectOneMonth.lms.feature.course.domain.model.Course;
 import org.oneProjectOneMonth.lms.feature.course.domain.repository.CourseRepository;
 import org.oneProjectOneMonth.lms.feature.course.domain.service.CourseService;
 import org.oneProjectOneMonth.lms.feature.course.domain.util.CourseUtility;
+import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
+import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.List;
 public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
+    private final InstructorRepository instructorRepository;
 //    private final CourseUtility courseUtility;
     private final ModelMapper modelMapper;
 
@@ -55,7 +58,9 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public ApiResponseDTO<Course> addCourse(Course course) {
+    public ApiResponseDTO<Course> addCourse(Course course, Long instructorId) {
+        course.setAvailable(false);
+        course.setInstructor(instructorRepository.findById(instructorId).orElse(null));
         return new ApiResponseDTO<>(courseRepository.save(course), "Course added successfully");
     }
 
@@ -63,7 +68,6 @@ public class CourseServiceImpl implements CourseService {
     public ApiResponseDTO<Course> updateCourse(Long courseId, Course course) {
         Course existingCourse = courseRepository.findById(courseId)
                 .orElseThrow(() -> new EntityNotFoundException("Course with ID " + courseId + " not found"));
-
         modelMapper.map(course, existingCourse);
         Course updatedCourse = courseRepository.save(existingCourse);
         return new ApiResponseDTO<>(updatedCourse, "Course Updated successfully");
@@ -77,5 +81,11 @@ public class CourseServiceImpl implements CourseService {
         } else {
             return new ApiResponseDTO<>("The Id was not found", "Course with ID " + courseId + " not found");
         }
+    }
+
+    @Override
+    public ApiResponseDTO<Course> ToggleAvailableCourse(Long courseId) {
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with ID " + courseId + " not found"));
+        return new ApiResponseDTO<>(course, "Course " + courseId + "'s availability is now changed");
     }
 }

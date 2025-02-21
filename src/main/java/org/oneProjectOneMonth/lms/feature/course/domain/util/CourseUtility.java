@@ -14,22 +14,19 @@ import org.springframework.stereotype.Component;
  * Created At : 21/02/2025, Feb
  * Project Name : lms-java
  **/
-
 @Component
 @RequiredArgsConstructor
 public class CourseUtility {
-//
 
-//    Todo - No Need This is for joking no use class
+//    Todo - Joking Class Not Use
 
-    //
     private final CourseRepository courseRepository;
 
-    public Boolean DIdNaeCourseShiLar(Long courseId) {
+    public Boolean theExistenceOfTheGloriousCourseInThisMightyUniverseChecker(Long courseId) {
         return courseRepository.existsById(courseId);
     }
 
-    public Course CourseKoByIdNaeShar(Long courseId) {
+    public Course findTheAllMightyCourseAmongTheFellowFolksWithId(Long courseId) {
         return courseRepository.findById(courseId).orElse(null);
     }
 }

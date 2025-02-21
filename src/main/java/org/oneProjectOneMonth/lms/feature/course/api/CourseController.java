@@ -20,7 +20,7 @@ import java.util.List;
  **/
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("courses")
+@RequestMapping("/${api.base.path}/${api.course.base.path}")
 @Tag(name = "Course", description = "Course API")
 @Slf4j
 public class CourseController {
@@ -31,8 +31,8 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponseDTO<Course>> getCourseById(@RequestParam("id") Long id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponseDTO<Course>> getCourseById(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.getCourseById(id));
     }
 
@@ -42,8 +42,8 @@ public class CourseController {
 //    }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<Course>> addCourse(@RequestBody Course course) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.addCourse(course));
+    public ResponseEntity<ApiResponseDTO<Course>> addCourse(@RequestBody Course course,@RequestParam("id") Long instructorId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.addCourse(course, instructorId));
     }
 
     @PutMapping("/{courseId}")
@@ -54,5 +54,10 @@ public class CourseController {
     @DeleteMapping("/{courseId}")
     public ResponseEntity<ApiResponseDTO<Boolean>> deleteCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.deleteCourseByCourseId(courseId));
+    }
+
+    @PatchMapping("/{courseId}")
+    public ResponseEntity<ApiResponseDTO<Course>> ToggleAvailableCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.ToggleAvailableCourse(courseId));
     }
 }

@@ -46,8 +46,8 @@ public class InstructorServiceImpl implements InstructorService {
     public Instructor updateInstructor(Long id, Instructor instructor) {
         return instructorRepository.findById(id)
                 .map(existingInstructor -> {
-                    existingInstructor.setName(instructor.getName());
-                    existingInstructor.setEmail(instructor.getEmail());
+//                    existingInstructor.setName(instructor.getName());
+//                    existingInstructor.setEmail(instructor.getEmail());
                     existingInstructor.setNrc(instructor.getNrc());
                     existingInstructor.setEduBackground(instructor.getEduBackground());
                     return instructorRepository.save(existingInstructor);
