@@ -1,4 +1,4 @@
-package org.oneProjectOneMonth.lms.feature.admin.domain.dto;
+package org.oneProjectOneMonth.lms.feature.user.domain.request;
 
 import java.time.LocalDate;
 
@@ -10,12 +10,14 @@ import lombok.Data;
 public class UpdateUserRequest {
 	private String name;
 	
+	private String username;
+	
 	@Email(message="Invalid Email format")
 	private String email;
 	
 	private String phone;
 	
-	@Past(message="Date must be in the past")
+	@Past(message="Birthday must be in the past")
 	private LocalDate dob;
 	
 	private String address;

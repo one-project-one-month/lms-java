@@ -111,6 +111,11 @@ public class AuthServiceImpl implements AuthService {
                 .username(userUtil.generateUniqueUsername(registerRequest.getName()))
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .address(registerRequest.getAddress())
+                .dob(registerRequest.getDob())
+                .available(true)
+                .phone(registerRequest.getPhone())
+                .profilePhoto(registerRequest.getProfilePhoto())
                 .roles(Set.of(userRole))
                 .build();
 
