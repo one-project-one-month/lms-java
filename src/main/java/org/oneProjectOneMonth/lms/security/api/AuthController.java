@@ -5,12 +5,14 @@
 package org.oneProjectOneMonth.lms.security.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
+import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
+import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
 import org.oneProjectOneMonth.lms.security.dto.RefreshTokenData;
-import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 import org.oneProjectOneMonth.lms.security.service.AuthService;
 import org.oneProjectOneMonth.lms.security.service.JwtService;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    public final UserService userService;
     public final JwtService jwtService;
 
     @PostMapping("/${api.auth.login}")
@@ -60,12 +63,14 @@ public class AuthController {
     }
 
     @PostMapping("/${api.auth.register}")
-    public ResponseEntity<ApiResponseDTO<Object>> register(@Validated @RequestBody RegisterRequest registerRequest) {
-        log.info("Received registration request for email: {}", registerRequest.getEmail());
+    public ResponseEntity<ApiResponseDTO<Object>> register(
+            @Valid @RequestBody CreateUserRequest registerRequest
+    ) {
+        log.info("Received registration request for email: {}", registerRequest.email());
 
-        Object registeredUser = authService.registerUser(registerRequest);
+        Object registeredUser = userService.signUp(registerRequest);
 
-        log.info(registeredUser != null ? "User registered successfully: {}" : "Registration failed for email: {}", registerRequest.getEmail());
+        log.info(registeredUser != null ? "User registered successfully: {}" : "Registration failed for email: {}", registerRequest.email());
         return ResponseEntity.ok(new ApiResponseDTO<>(registeredUser, registeredUser != null ? "Registration successful" : "Registration failed"));
     }
 
