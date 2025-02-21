@@ -156,7 +156,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private Map<String, Object> generateTokens(User user, String roleName) {
+    public Map<String, Object> generateTokens(User user, String roleName) {
         log.debug("Generating tokens for user: {}", user.getEmail());
 
         String accessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName,

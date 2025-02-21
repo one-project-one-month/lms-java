@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.feature.admin.domain.model.Admin;
+import org.oneProjectOneMonth.lms.feature.admin.domain.repository.AdminRepository;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
@@ -11,6 +13,8 @@ import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
 import org.oneProjectOneMonth.lms.feature.student.domain.model.Student;
 import org.oneProjectOneMonth.lms.feature.student.domain.repository.StudentRepository;
+import org.oneProjectOneMonth.lms.feature.token.domain.model.Token;
+import org.oneProjectOneMonth.lms.feature.token.domain.repository.TokenRepository;
 import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
@@ -22,13 +26,14 @@ import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
 import org.oneProjectOneMonth.lms.config.response.dto.PaginatedResponse;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
 import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
+import org.oneProjectOneMonth.lms.security.service.impl.AuthServiceImpl;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +48,9 @@ public class UserServiceImpl implements UserService {
     private final UserUtil userUtil;
     private final StudentRepository studentRepository;
     private final InstructorRepository instructorRepository;
+    private final AdminRepository adminRepository;
+    private final AuthServiceImpl  authService;
+    private final TokenRepository tokenRepository;
 
 
     @Override
@@ -72,18 +80,14 @@ public class UserServiceImpl implements UserService {
         user.setRoles(roles);
         user.setRoleId(role.getId());
 
-        // Directly Save ADMIN Role
-        if (role.getName().equals(RoleName.ADMIN)) {
-            User savedAdmin = userRepository.save(user);
-            log.info("Admin user created successfully: {}", savedAdmin);
-            return CreateUserResponse.fromUser(savedAdmin, null);
-        }
-
         User savedUser = userRepository.save(user);
         log.info("User created successfully: {}", savedUser);
         Instructor instructor = null;
 
-        if (role.getName().equals(RoleName.STUDENT)) {
+        if(role.getName().equals(RoleName.ADMIN)){
+            Admin admin = new Admin();
+            adminRepository.save(admin);
+        }else if (role.getName().equals(RoleName.STUDENT)) {
             Student student = new Student();
             student.setUser(savedUser);
             studentRepository.save(student);
@@ -97,6 +101,16 @@ public class UserServiceImpl implements UserService {
             instructor.setEduBackground(request.eduBackground());
             instructorRepository.save(instructor);
         }
+
+        // Generate access and refresh tokens
+        Map<String, Object> tokens = authService.generateTokens(savedUser, role.getName().name());
+        String refreshToken = tokens.get("refreshToken").toString();
+
+        Token token = new Token();
+        token.setRefreshtoken(refreshToken);
+        token.setExpiredAt(Instant.now().plus(7, ChronoUnit.DAYS));
+        token.setUser(savedUser);
+        tokenRepository.save(token);
         return CreateUserResponse.fromUser(savedUser, instructor);
     }
 

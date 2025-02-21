@@ -1,10 +1,10 @@
 package org.oneProjectOneMonth.lms.feature.user.api;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.ChangePasswordRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.request.CreateUserRequest;
@@ -12,14 +12,11 @@ import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserRespons
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponse;
-import org.oneProjectOneMonth.lms.config.response.dto.PaginatedResponse;
 import org.oneProjectOneMonth.lms.config.response.utils.ResponseUtil;
-import org.oneProjectOneMonth.lms.config.utils.PaginationMetaUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +24,7 @@ import java.util.Map;
 @RequestMapping("/${api.base.path}/${api.user.base.path}")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "User", description = "User Api")
 public class UserController {
 
     private final UserService userService;
