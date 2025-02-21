@@ -26,5 +26,4 @@ public record ApiResponseDTO<T>(
     public ApiResponseDTO(String error, String message, T data) {
         this(ResponseStatus.FAILED, error, message, data);
     }
-
 }
