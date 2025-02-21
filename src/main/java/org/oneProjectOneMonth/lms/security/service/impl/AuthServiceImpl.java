@@ -108,6 +108,11 @@ public class AuthServiceImpl implements AuthService {
                 .username(userUtil.generateUniqueUsername(registerRequest.getName()))
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .address(registerRequest.getAddress())
+                .dob(registerRequest.getDob())
+                .available(true)
+                .phone(registerRequest.getPhone())
+                .profilePhoto(registerRequest.getProfilePhoto())
                 .roles(Set.of(userRole))
                 .build();
 
@@ -142,7 +147,7 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
-    private Map<String, Object> generateTokens(User user, String roleName) {
+    public Map<String, Object> generateTokens(User user, String roleName) {
         log.debug("Generating tokens for user: {}", user.getEmail());
 
         String accessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName,
