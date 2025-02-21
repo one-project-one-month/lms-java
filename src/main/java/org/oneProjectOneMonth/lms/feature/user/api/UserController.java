@@ -1,5 +1,6 @@
 package org.oneProjectOneMonth.lms.feature.user.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -30,6 +31,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
+    @Operation(summary = "User Signup Api")
      public ResponseEntity<ApiResponseDTO<CreateUserResponse>> signUp(
              @Valid @RequestBody CreateUserRequest request
     ){
@@ -37,12 +39,14 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "Get All Users Api")
     public ResponseEntity<ApiResponseDTO<List<CreateUserResponse>>> getAllUsers() {
         List<CreateUserResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(new ApiResponseDTO<>(users));
     }
 
     @PostMapping("/${api.user.change-password}")
+    @Operation(summary = "Change Password Api")
     public ResponseEntity<ApiResponse> changePassword(
             @Valid @RequestBody ChangePasswordRequest changePasswordRequest,
             HttpServletRequest request,
@@ -75,6 +79,7 @@ public class UserController {
     }
 
     @GetMapping("/${api.user.check-username-exists}")
+    @Operation(summary = "Check Username Exists Api")
     public ResponseEntity<ApiResponse> checkUsernameExists(
             @RequestParam("username") String username, HttpServletRequest request) {
 
