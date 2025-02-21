@@ -32,7 +32,6 @@ public record CreateUserRequest(
         String nrc,
         String eduBackground,
         String address,
-        String profilePhoto,
-        boolean available
+        String profilePhoto
 ) {
 }

@@ -78,7 +78,6 @@ public class UserServiceImpl implements UserService {
         User user = modelMapper.map(request, User.class);
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRoles(roles);
-        user.setAvailable(request.available());
 
         User savedUser = userRepository.save(user);
         log.info("User created successfully: {}", savedUser);
@@ -86,9 +85,11 @@ public class UserServiceImpl implements UserService {
 
         if(role.getName().equals(RoleName.ADMIN)){
             Admin admin = new Admin();
+            user.setAvailable(true);
             adminRepository.save(admin);
         }else if (role.getName().equals(RoleName.STUDENT)) {
             Student student = new Student();
+            user.setAvailable(true);
             student.setUser(savedUser);
             studentRepository.save(student);
         } else if (role.getName().equals(RoleName.INSTRUCTOR)) {
@@ -97,6 +98,7 @@ public class UserServiceImpl implements UserService {
             }
             instructor = new Instructor();
             instructor.setUser(savedUser);
+            user.setAvailable(false);
             instructor.setNrc(request.nrc());
             instructor.setEduBackground(request.eduBackground());
             instructorRepository.save(instructor);
