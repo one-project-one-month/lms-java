@@ -4,6 +4,7 @@
  */
 package org.oneProjectOneMonth.lms.security.api;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/${api.base.path}/${api.auth.base.path}")
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Authentication API")
 @Slf4j
 public class AuthController {
 
