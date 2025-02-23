@@ -17,6 +17,7 @@ import org.oneProjectOneMonth.lms.feature.token.domain.repository.TokenRepositor
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
+import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
@@ -158,10 +159,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Object> getCurrentUser(String authHeader) {
-        UserDto userDto = userUtil.getCurrentUserDto(authHeader);
+    public CreateUserResponse getCurrentUser(String authHeader) {
 
-        return Map.of("user", userDto);
+        return userUtil.getCurrentUserResponse(authHeader);
     }
 
 }

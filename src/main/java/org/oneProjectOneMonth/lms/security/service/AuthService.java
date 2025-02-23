@@ -5,6 +5,8 @@
 package org.oneProjectOneMonth.lms.security.service;
 
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
+import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
+import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
 import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 
@@ -19,5 +21,5 @@ public interface AuthService {
 
     Map<String, Object> refreshToken(String refreshToken);
 
-    Map<String, Object> getCurrentUser(String authHeader);
+    CreateUserResponse getCurrentUser(String authHeader);
 }
