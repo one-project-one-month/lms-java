@@ -11,13 +11,13 @@ import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 import java.util.Map;
 
 public interface AuthService {
-    ApiResponseDTO<Map<String, Object>> authenticateUser(LoginRequest loginRequest);
+    Map<String, Object> authenticateUser(LoginRequest loginRequest);
 
-    ApiResponseDTO<Map<String, Object>> registerUser(RegisterRequest registerRequest);
+//    ApiResponseDTO<Map<String, Object>> registerUser(RegisterRequest registerRequest);
 
     void logout(String accessToken);
 
-    ApiResponseDTO<Map<String, Object>> refreshToken(String refreshToken);
+    Map<String, Object> refreshToken(String refreshToken);
 
-    ApiResponseDTO<Map<String, Object>> getCurrentUser(String authHeader);
+    Map<String, Object> getCurrentUser(String authHeader);
 }
