@@ -40,10 +40,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
-//                .authorizeHttpRequests(this::configureAuthorization)
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                )
+                .authorizeHttpRequests(this::configureAuthorization)
+//                .authorizeHttpRequests(auth -> auth
+//                        .anyRequest().permitAll()
+//                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)
@@ -53,10 +53,10 @@ public class SecurityConfig {
 
     private void configureAuthorization(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/public/**", "/api/v1/users/change-password","/api/v1/users").permitAll()
-                .requestMatchers("/api/v1/users/**").access(hasRole(ADMIN))
-                .requestMatchers("api/v1/courses/**").access(hasRole(INSTRUCTOR))
+                .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register").permitAll()
+                .requestMatchers("/api/v1/auth/me", "/api/v1/public/**", "/api/v1/users/change-password","/api/v1/users").permitAll()
+                .requestMatchers("/api/v1/auth/me", "/api/v1/users/**").access(hasRole(ADMIN))
+                .requestMatchers("/api/v1/auth/me", "/api/v1/courses/**").access(hasRole(INSTRUCTOR))
                 .anyRequest().authenticated();
     }
 

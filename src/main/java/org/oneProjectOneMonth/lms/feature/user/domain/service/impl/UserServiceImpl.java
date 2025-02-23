@@ -142,8 +142,8 @@ public class UserServiceImpl implements UserService {
 	public void changePassword(String oldPassword, String newPassword, String authHeader) throws Exception {
 		log.info("Initiating password change for authenticated user.");
 
-		UserDto userDto = userUtil.getCurrentUserDto(authHeader);
-		User currentUser = EntityUtil.getEntityById(userRepository, userDto.getId());
+		CreateUserResponse userDto = userUtil.getCurrentUserResponse(authHeader);
+		User currentUser = EntityUtil.getEntityById(userRepository, userDto.id());
 
 		if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
 			log.warn("Password change failed: Incorrect old password for user ID {}", currentUser.getId());
