@@ -1,6 +1,9 @@
 package org.oneProjectOneMonth.lms.feature.course.domain.service;
 
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
+import org.oneProjectOneMonth.lms.feature.course.domain.dto.CourseRequest;
+import org.oneProjectOneMonth.lms.feature.course.domain.dto.CourseResponse;
+import org.oneProjectOneMonth.lms.feature.course.domain.dto.CreateCourseDto;
 import org.oneProjectOneMonth.lms.feature.course.domain.model.Course;
 
 import java.util.List;
@@ -13,9 +16,9 @@ import java.util.List;
 public interface CourseService {
 
     ApiResponseDTO<List<Course>> getAllCourses();
-    ApiResponseDTO<Course> getCourseById(Long courseId);
-    ApiResponseDTO<Course> addCourse(Course course, Long instructorId);
-    ApiResponseDTO<Course> updateCourse(Long courseId, Course course);
+    ApiResponseDTO<CourseResponse> getCourseById(Long courseId);
+    ApiResponseDTO<CourseResponse> addCourse(CreateCourseDto course, Long instructorId);
+    ApiResponseDTO<CourseResponse> updateCourse(Long courseId, CourseRequest course);
     ApiResponseDTO<Boolean> deleteCourseByCourseId(Long courseId);
-    ApiResponseDTO<Course> ToggleAvailableCourse(Long courseId);
+    ApiResponseDTO<CourseResponse> ToggleAvailableCourse(Long courseId);
 }
