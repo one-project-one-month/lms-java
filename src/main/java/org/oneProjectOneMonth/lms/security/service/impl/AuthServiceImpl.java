@@ -5,13 +5,11 @@
 package org.oneProjectOneMonth.lms.security.service.impl;
 
 import io.jsonwebtoken.Claims;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
 import org.oneProjectOneMonth.lms.feature.role.domain.model.Role;
-import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.role.domain.repository.RoleRepository;
 import org.oneProjectOneMonth.lms.feature.token.domain.dto.TokenDto;
 import org.oneProjectOneMonth.lms.feature.token.domain.model.Token;
@@ -19,10 +17,10 @@ import org.oneProjectOneMonth.lms.feature.token.domain.repository.TokenRepositor
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
+import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.UserUtil;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
 import org.oneProjectOneMonth.lms.security.dto.LoginRequest;
-import org.oneProjectOneMonth.lms.security.dto.RegisterRequest;
 import org.oneProjectOneMonth.lms.security.service.AuthService;
 import org.oneProjectOneMonth.lms.security.service.JwtService;
 import org.oneProjectOneMonth.lms.security.utils.ClaimsProvider;
@@ -48,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
     private final ModelMapper modelMapper;
 
     @Override
-    public ApiResponseDTO<Map<String, Object>> authenticateUser(LoginRequest loginRequest) {
+    public Map<String, Object> authenticateUser(LoginRequest loginRequest) {
         log.info("Authenticating user with email: {}", loginRequest.getEmail());
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -65,12 +63,10 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             log.warn("Invalid password for user: {}", loginRequest.getEmail());
-            return new ApiResponseDTO<>("UNAUTHORIZED", "Invalid email or password");
+            throw new SecurityException("Invalid email or password");
         }
 
         log.info("User authenticated successfully: {}", loginRequest.getEmail());
-
-        UserDto userDto = DtoUtil.map(user, UserDto.class, modelMapper);
 
         Token refreshToken = tokenRepository.findByUser(user)
                 .orElseThrow(() -> {
@@ -82,70 +78,13 @@ public class AuthServiceImpl implements AuthService {
 
         TokenDto tokenDto = DtoUtil.map(refreshToken, TokenDto.class, modelMapper);
 
-        return new ApiResponseDTO<>(
-                Map.of(
-                        "user", userDto,
-                        "accessToken", tokenData.get("accessToken"),
-                        "refreshToken", tokenDto.getRefreshtoken()
-                ),
-                "You are successfully logged in!"
+        return Map.of(
+                "accessToken", tokenData.get("accessToken"),
+                "refreshToken", tokenDto.getRefreshtoken()
         );
     }
 
-    @Override
-    @Transactional
-    public ApiResponseDTO<Map<String, Object>> registerUser(RegisterRequest registerRequest) {
-        log.info("Registering new user with email: {}", registerRequest.getEmail());
-
-        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-            log.warn("Email already exists: {}", registerRequest.getEmail());
-            return new ApiResponseDTO<>("CONFLICT", "Email is already in use", null);
-        }
-
-        Role userRole = roleRepository.findByName(RoleName.ADMIN)
-                .orElseThrow(() -> new RuntimeException("Role not found in database!"));
-        log.info("Assigning role: {}", userRole.getName());
-
-        User newUser = User.builder()
-                .name(registerRequest.getName())
-                .username(userUtil.generateUniqueUsername(registerRequest.getName()))
-                .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .roles(Set.of(userRole))
-                .build();
-
-        userRepository.save(newUser);
-
-        Map<String, Object> tokenData = generateTokens(newUser, String.valueOf(userRole.getName()));
-
-        String accessToken = (String) tokenData.get("accessToken");
-        String refreshToken = (String) tokenData.get("refreshToken");
-
-        Instant expiredAt = Instant.now().plus(7, ChronoUnit.DAYS);
-
-        Token token = Token.builder()
-                .user(newUser)
-                .refreshtoken(refreshToken)
-                .expiredAt(expiredAt)
-                .build();
-
-        tokenRepository.save(token);
-
-        log.info("User registered successfully: {}", registerRequest.getEmail());
-
-        UserDto userDto = DtoUtil.map(newUser, UserDto.class, modelMapper);
-
-        return new ApiResponseDTO<>(
-                Map.of(
-                        "user", userDto,
-                        "accessToken", accessToken,
-                        "refreshToken", refreshToken
-                ),
-                "You have registered successfully."
-        );
-    }
-
-    private Map<String, Object> generateTokens(User user, String roleName) {
+    public Map<String, Object> generateTokens(User user, String roleName) {
         log.debug("Generating tokens for user: {}", user.getEmail());
 
         String accessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName,
@@ -175,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponseDTO<Map<String, Object>> refreshToken(String refreshToken) {
+    public Map<String, Object> refreshToken(String refreshToken) {
         log.info("Validating refresh token");
 
         Claims claims;
@@ -183,7 +122,7 @@ public class AuthServiceImpl implements AuthService {
             claims = jwtService.validateToken(refreshToken);
         } catch (SecurityException ex) {
             log.warn("Invalid refresh token: {}", ex.getMessage());
-            return new ApiResponseDTO<>("UNAUTHORIZED", "Invalid or expired refresh token", null);
+            throw new SecurityException("Invalid or expired refresh token");
         }
 
         String email = claims.getSubject();
@@ -191,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (user == null) {
             log.warn("User not found for refresh token: {}", email);
-            return new ApiResponseDTO<>("UNAUTHORIZED", "User not found", null);
+            throw new SecurityException("User not found");
         }
 
         log.info("Generating new access token for user: {}", email);
@@ -200,25 +139,29 @@ public class AuthServiceImpl implements AuthService {
         String roleName = roleList.stream()
                 .map(role -> role.getName().name())
                 .findFirst()
-                .orElse("ROLE_USER");
+                .orElse("ADMIN");
 
-        String newAccessToken = jwtService.generateToken(ClaimsProvider.generateClaims(user), roleName, email,
-                15 * 60 * 1000);
+        Map<String, Object> newTokens = generateTokens(user, roleName);
+        String newAccessToken = newTokens.get("accessToken").toString();
+        String newRefreshToken = newTokens.get("refreshToken").toString();
 
-        return new ApiResponseDTO<>(
-                Map.of("accessToken", newAccessToken),
-                "Access token refreshed successfully"
+        Token existingToken = tokenRepository.findByUser(user)
+                .orElseThrow(() -> new SecurityException("Token not found for user"));
+
+        existingToken.setRefreshtoken(newRefreshToken);
+        existingToken.setExpiredAt(Instant.now().plus(7, ChronoUnit.DAYS));
+        tokenRepository.save(existingToken);
+
+        return Map.of(
+                "accessToken", newAccessToken,
+                "refreshToken", newRefreshToken
         );
     }
 
     @Override
-    public ApiResponseDTO<Map<String, Object>> getCurrentUser(String authHeader) {
-        UserDto userDto = userUtil.getCurrentUserDto(authHeader);
+    public CreateUserResponse getCurrentUser(String authHeader) {
 
-        return new ApiResponseDTO<>(
-                Map.of("user", userDto),
-                "User retrieved successfully"
-        );
+        return userUtil.getCurrentUserResponse(authHeader);
     }
 
 }
