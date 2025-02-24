@@ -9,6 +9,8 @@ import org.oneProjectOneMonth.lms.feature.course.domain.dto.CourseResponse;
 import org.oneProjectOneMonth.lms.feature.course.domain.dto.CreateCourseDto;
 import org.oneProjectOneMonth.lms.feature.course.domain.model.Course;
 import org.oneProjectOneMonth.lms.feature.course.domain.service.CourseService;
+import org.oneProjectOneMonth.lms.feature.student.domain.model.Student;
+import org.springframework.data.repository.support.Repositories;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +26,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/${api.base.path}/${api.course.base.path}")
 @Tag(name = "Course", description = "Course API")
-@Slf4j
 public class CourseController {
     private final CourseService courseService;
 
+//    Todo - Future Improvement should be Search With Pagination
     @GetMapping
-    public ResponseEntity<ApiResponseDTO<List<Course>>> getCourses() {
+    public ResponseEntity<ApiResponseDTO<List<CourseResponse>>> getCourses(
+//            From
+//            To
+//            Size
+//            SearchByName
+//            SearchByCreatedDate
+//            SearchBy ....
+    ) {
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
@@ -64,4 +73,24 @@ public class CourseController {
     public ResponseEntity<ApiResponseDTO<CourseResponse>> ToggleAvailableCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.ToggleAvailableCourse(courseId));
     }
+
+    @GetMapping("/popular")
+    public ResponseEntity<ApiResponseDTO<List<CourseResponse>>> getPopularCourses() {
+//        Todo - Later Improvement
+        return ResponseEntity.ok(courseService.getPopularCourses());
+    }
+
+    @GetMapping("/trending")
+    public ResponseEntity<ApiResponseDTO<List<CourseResponse>>> getTrendingCourses() {
+//        Todo - Later Improvement
+        return ResponseEntity.ok(courseService.getTrendingCourses());
+    }
+
+    @PutMapping("/{id}/apply-discount/{currentPrice}")
+    public ResponseEntity<ApiResponseDTO<CourseResponse>> applyDiscount(@PathVariable Long id, @PathVariable Double currentPrice) {
+//        Todo - Later Improvement
+        return ResponseEntity.ok(courseService.applyDiscount(id, currentPrice));
+    }
+
+
 }

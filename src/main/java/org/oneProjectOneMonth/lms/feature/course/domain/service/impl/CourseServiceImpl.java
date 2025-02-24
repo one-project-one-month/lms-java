@@ -14,6 +14,7 @@ import org.oneProjectOneMonth.lms.feature.course.domain.repository.CourseReposit
 import org.oneProjectOneMonth.lms.feature.course.domain.service.CourseService;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
+import org.oneProjectOneMonth.lms.feature.lesson.domain.dto.LessonResponseDto;
 import org.oneProjectOneMonth.lms.feature.lesson.domain.model.Lesson;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,13 +46,13 @@ public class CourseServiceImpl implements CourseService {
 
 
     @Override
-    public ApiResponseDTO<List<Course>> getAllCourses(
+    public ApiResponseDTO<List<CourseResponse>> getAllCourses(
             //From
             //To
             //Size
     ) {
-       List<Course> courses =  courseRepository.findAll();
-        return new ApiResponseDTO<>(courses, "List of courses");
+        List<CourseResponse> courseResponse = DtoUtil.mapList(courseRepository.findAll(), CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponse, "List of courses");
     }
 
     @Override
@@ -122,5 +123,23 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with ID " + courseId + " not found"));
         CourseResponse courseResponse = DtoUtil.map(course, CourseResponse.class, modelMapper);
         return new ApiResponseDTO<>(courseResponse, "Course " + courseId + "'s availability is now changed");
+    }
+
+    @Override
+    public ApiResponseDTO<List<CourseResponse>> getTrendingCourses() {
+//        Todo - Later Improvement
+        return null;
+    }
+
+    @Override
+    public ApiResponseDTO<List<CourseResponse>> getPopularCourses() {
+//        Todo - Later Improvement
+        return null;
+    }
+
+    @Override
+    public ApiResponseDTO<CourseResponse> applyDiscount(Long courseId, Double currentPrice) {
+//        Todo - Later Improvement
+        return null;
     }
 }

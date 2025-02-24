@@ -18,11 +18,4 @@ public class FunnyMethods {
 
     private final CourseRepository courseRepository;
 
-    public Boolean theExistenceOfTheGloriousCourseInThisMightyUniverseChecker(Long courseId) {
-        return courseRepository.existsById(courseId);
-    }
-
-    public Course findTheAllMightyCourseAmongTheFellowFolksWithId(Long courseId) {
-        return courseRepository.findById(courseId).orElse(null);
-    }
 }

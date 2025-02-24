@@ -15,10 +15,13 @@ import java.util.List;
  **/
 public interface CourseService {
 
-    ApiResponseDTO<List<Course>> getAllCourses();
+    ApiResponseDTO<List<CourseResponse>> getAllCourses();
     ApiResponseDTO<CourseResponse> getCourseById(Long courseId);
     ApiResponseDTO<CourseResponse> addCourse(CreateCourseDto course, Long instructorId);
     ApiResponseDTO<CourseResponse> updateCourse(Long courseId, CourseRequest course);
     ApiResponseDTO<Boolean> deleteCourseByCourseId(Long courseId);
     ApiResponseDTO<CourseResponse> ToggleAvailableCourse(Long courseId);
+    ApiResponseDTO<List<CourseResponse>> getTrendingCourses();
+    ApiResponseDTO<List<CourseResponse>> getPopularCourses();
+    ApiResponseDTO<CourseResponse> applyDiscount(Long courseId, Double currentPrice);
 }
