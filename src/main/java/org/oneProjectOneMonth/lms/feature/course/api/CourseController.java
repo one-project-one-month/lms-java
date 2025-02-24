@@ -82,7 +82,6 @@ public class CourseController {
 
     @GetMapping("/trending")
     public ResponseEntity<ApiResponseDTO<List<CourseResponse>>> getTrendingCourses() {
-//        Todo - Later Improvement
         return ResponseEntity.ok(courseService.getTrendingCourses());
     }
 

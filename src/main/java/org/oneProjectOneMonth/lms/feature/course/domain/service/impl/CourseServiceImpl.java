@@ -14,8 +14,7 @@ import org.oneProjectOneMonth.lms.feature.course.domain.repository.CourseReposit
 import org.oneProjectOneMonth.lms.feature.course.domain.service.CourseService;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
-import org.oneProjectOneMonth.lms.feature.lesson.domain.dto.LessonResponseDto;
-import org.oneProjectOneMonth.lms.feature.lesson.domain.model.Lesson;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -127,14 +126,17 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public ApiResponseDTO<List<CourseResponse>> getTrendingCourses() {
-//        Todo - Later Improvement
-        return null;
+        LocalDateTime lastWeek = LocalDateTime.now().minusDays(7);
+        List<Course> courses = courseRepository.findTrendingCourses(lastWeek, PageRequest.of(0, 5));
+        List<CourseResponse> courseResponses = DtoUtil.mapList(courses, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponses, "Trending Courses");
     }
 
     @Override
     public ApiResponseDTO<List<CourseResponse>> getPopularCourses() {
-//        Todo - Later Improvement
-        return null;
+        List<Course> courses = courseRepository.findPopularCourses(PageRequest.of(0, 5));
+        List<CourseResponse> courseResponses = DtoUtil.mapList(courses, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponses, "Popular Courses");
     }
 
     @Override
