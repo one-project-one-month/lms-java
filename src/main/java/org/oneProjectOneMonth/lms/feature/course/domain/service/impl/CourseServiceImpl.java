@@ -4,17 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.oneProjectOneMonth.lms.config.exception.EntityNotFoundException;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
+import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
+import org.oneProjectOneMonth.lms.config.utils.EntityUtil;
+import org.oneProjectOneMonth.lms.feature.course.domain.dto.CourseRequest;
+import org.oneProjectOneMonth.lms.feature.course.domain.dto.CourseResponse;
+import org.oneProjectOneMonth.lms.feature.course.domain.dto.CreateCourseDto;
 import org.oneProjectOneMonth.lms.feature.course.domain.model.Course;
 import org.oneProjectOneMonth.lms.feature.course.domain.repository.CourseRepository;
 import org.oneProjectOneMonth.lms.feature.course.domain.service.CourseService;
-import org.oneProjectOneMonth.lms.feature.course.domain.util.CourseUtility;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
 import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.print.Pageable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -41,51 +45,103 @@ public class CourseServiceImpl implements CourseService {
 
 
     @Override
-    public ApiResponseDTO<List<Course>> getAllCourses(
+    public ApiResponseDTO<List<CourseResponse>> getAllCourses(
             //From
             //To
             //Size
     ) {
-       List<Course> courses =  courseRepository.findAll();
-        return new ApiResponseDTO<>(courses, "List of courses");
+        List<CourseResponse> courseResponse = DtoUtil.mapList(courseRepository.findAll(), CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponse, "List of courses");
     }
 
     @Override
-    public ApiResponseDTO<Course> getCourseById(Long courseId) {
-        return courseRepository.findById(courseId)
-                .map(course -> new ApiResponseDTO<>(course, "Course found successfully"))
-                .orElseGet(() -> new ApiResponseDTO<>("NOT_FOUND", "Course with ID " + courseId + " not found"));
+    public ApiResponseDTO<CourseResponse> getCourseById(Long courseId) {
+        Course course = EntityUtil.getEntityById(courseRepository, courseId);
+        CourseResponse courseResponse = DtoUtil.map(course, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponse , "The Course is Found with id: " + courseId);
     }
 
     @Override
-    public ApiResponseDTO<Course> addCourse(Course course, Long instructorId) {
-        course.setAvailable(false);
-        course.setInstructor(instructorRepository.findById(instructorId).orElse(null));
-        return new ApiResponseDTO<>(courseRepository.save(course), "Course added successfully");
+    public ApiResponseDTO<CourseResponse> addCourse(CreateCourseDto course, Long instructorId) {
+        Instructor instructor = EntityUtil.getEntityById(instructorRepository, instructorId);
+        Course courseEntity = Course.builder()
+                .instructor(instructor)
+                .description(course.getDescription())
+                .courseName(course.getCourseName())
+                .level(course.getLevel())
+                .category(course.getCategory())
+                .type(course.getType())
+                .duration(course.getDuration())
+                .originalPrice(course.getOriginalPrice())
+                .currentPrice(course.getCurrentPrice())
+                .thumbnail(course.getThumbnail())
+                .isAvailable(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        Course savedCourse = courseRepository.save(courseEntity);
+
+        CourseResponse courseResponse = DtoUtil.map(savedCourse, CourseResponse.class, modelMapper);
+        courseResponse.setInstructorId(savedCourse.getInstructor().getId());
+        courseResponse.setCategory(savedCourse.getCategory().getName());
+
+        return new ApiResponseDTO<>(courseResponse , "Course added successfully");
     }
 
+    @Transactional
     @Override
-    public ApiResponseDTO<Course> updateCourse(Long courseId, Course course) {
-        Course existingCourse = courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course with ID " + courseId + " not found"));
-        modelMapper.map(course, existingCourse);
+    public ApiResponseDTO<CourseResponse> updateCourse(Long courseId, CourseRequest courseRequest) {
+        Course existingCourse = EntityUtil.getEntityById(courseRepository, courseId);
+        existingCourse.setDescription(courseRequest.getDescription());
+        existingCourse.setCourseName(courseRequest.getCourseName());
+        existingCourse.setLevel(courseRequest.getLevel());
+        existingCourse.setCategory(courseRequest.getCategory());
+        existingCourse.setType(courseRequest.getType());
+        existingCourse.setDuration(courseRequest.getDuration());
+        existingCourse.setOriginalPrice(courseRequest.getOriginalPrice());
+        existingCourse.setCurrentPrice(courseRequest.getCurrentPrice());
+        existingCourse.setThumbnail(courseRequest.getThumbnail());
+        existingCourse.setAvailable(courseRequest.isAvailable());
+        existingCourse.setUpdatedAt(LocalDateTime.now());
         Course updatedCourse = courseRepository.save(existingCourse);
-        return new ApiResponseDTO<>(updatedCourse, "Course Updated successfully");
+
+        CourseResponse courseResponse = DtoUtil.map(updatedCourse, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponse, "Course Updated successfully");
     }
 
+    @Transactional
     @Override
     public ApiResponseDTO<Boolean> deleteCourseByCourseId(Long courseId) {
-        if (courseRepository.existsById(courseId)) {
-            courseRepository.deleteById(courseId);
-            return new ApiResponseDTO<>(true , "Course Deleted Successfully");
-        } else {
-            return new ApiResponseDTO<>("The Id was not found", "Course with ID " + courseId + " not found");
-        }
+        Course course = EntityUtil.getEntityById(courseRepository, courseId);
+        courseRepository.delete(course);
+        return new ApiResponseDTO<>(true, "Course Deleted Successfully");
+    }
+
+    @Transactional
+    @Override
+    public ApiResponseDTO<CourseResponse> ToggleAvailableCourse(Long courseId) {
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with ID " + courseId + " not found"));
+        CourseResponse courseResponse = DtoUtil.map(course, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponse, "Course " + courseId + "'s availability is now changed");
     }
 
     @Override
-    public ApiResponseDTO<Course> ToggleAvailableCourse(Long courseId) {
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with ID " + courseId + " not found"));
-        return new ApiResponseDTO<>(course, "Course " + courseId + "'s availability is now changed");
+    public ApiResponseDTO<List<CourseResponse>> getTrendingCourses() {
+        LocalDateTime lastWeek = LocalDateTime.now().minusDays(7);
+        List<Course> courses = courseRepository.findTrendingCourses(lastWeek, PageRequest.of(0, 5));
+        List<CourseResponse> courseResponses = DtoUtil.mapList(courses, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponses, "Trending Courses");
+    }
+
+    @Override
+    public ApiResponseDTO<List<CourseResponse>> getPopularCourses() {
+        List<Course> courses = courseRepository.findPopularCourses(PageRequest.of(0, 5));
+        List<CourseResponse> courseResponses = DtoUtil.mapList(courses, CourseResponse.class, modelMapper);
+        return new ApiResponseDTO<>(courseResponses, "Popular Courses");
+    }
+
+    @Override
+    public ApiResponseDTO<CourseResponse> applyDiscount(Long courseId, Double currentPrice) {
+//        Todo - Later Improvement
+        return null;
     }
 }
