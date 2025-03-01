@@ -92,6 +92,7 @@ public class UserServiceImpl implements UserService {
 		if(role.getName().equals(RoleName.ADMIN)){
 			Admin admin = new Admin();
 			user.setAvailable(true);
+			admin.setUser(savedUser);
 			adminRepository.save(admin);
 		}else if (role.getName().equals(RoleName.STUDENT)) {
 			Student student = new Student();
