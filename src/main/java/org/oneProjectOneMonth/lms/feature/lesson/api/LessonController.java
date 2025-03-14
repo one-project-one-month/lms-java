@@ -1,5 +1,6 @@
 package org.oneProjectOneMonth.lms.feature.lesson.api;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oneProjectOneMonth.lms.config.response.dto.ApiResponseDTO;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/${api.base.path}/${api.lesson.base.path}")
 @RequiredArgsConstructor
+@Tag(name = "Lesson", description = "Lesson API")
 @Slf4j
 public class LessonController {
     private final LessonService lessonService;

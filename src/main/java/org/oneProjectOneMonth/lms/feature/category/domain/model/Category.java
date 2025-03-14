@@ -1,20 +1,19 @@
 package org.oneProjectOneMonth.lms.feature.category.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.oneProjectOneMonth.lms.feature.course.domain.model.Course;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 @Data
 @Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category {
+    // Explicit getters and setters (if Lombok is not working)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,4 +36,5 @@ public class Category {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
 }

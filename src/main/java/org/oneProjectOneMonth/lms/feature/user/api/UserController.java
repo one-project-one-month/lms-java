@@ -1,5 +1,12 @@
 package org.oneProjectOneMonth.lms.feature.user.api;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +18,7 @@ import org.oneProjectOneMonth.lms.feature.user.domain.request.UpdateUserRequest;
 import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.feature.user.domain.service.UserService;
 import org.oneProjectOneMonth.lms.feature.user.domain.utils.PasswordValidatorUtil;
+import org.oneProjectOneMonth.lms.config.response.utils.ResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -25,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,20 +43,25 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/${api.base.path}/${api.user.base.path}")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "User", description = "User Api")
 public class UserController {
 
 	private final UserService userService;
 
-	@PostMapping
-	public ResponseEntity<ApiResponseDTO<CreateUserResponse>> signUp(@Valid @RequestBody CreateUserRequest request) {
-		return ResponseEntity.ok(new ApiResponseDTO<>(userService.signUp(request)));
-	}
+    @PostMapping
+    @Operation(summary = "User Signup Api")
+     public ResponseEntity<ApiResponseDTO<CreateUserResponse>> signUp(
+             @Valid @RequestBody CreateUserRequest request
+    ){
+        return ResponseEntity.ok(new ApiResponseDTO<>(userService.signUp(request)));
+    }
 
-	@GetMapping
-	public ResponseEntity<ApiResponseDTO<List<CreateUserResponse>>> getAllUsers() {
-		List<CreateUserResponse> users = userService.getAllUsers();
-		return ResponseEntity.ok(new ApiResponseDTO<>(users));
-	}
+    @GetMapping
+    @Operation(summary = "Get All Users Api")
+    public ResponseEntity<ApiResponseDTO<List<CreateUserResponse>>> getAllUsers() {
+        List<CreateUserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(new ApiResponseDTO<>(users));
+    }
 
 	@PostMapping("/${api.user.change-password}")
 	public ResponseEntity<ApiResponseDTO<Boolean>> changePassword(
@@ -58,7 +73,7 @@ public class UserController {
 		if (!PasswordValidatorUtil.isValid(changePasswordRequest.getNewPassword())) {
 			log.warn("Password change failed: Weak password attempt.");
 			return ResponseUtil.buildResponse(new ApiResponseDTO<>(false,
-					"New password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character."),
+							"New password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character."),
 					HttpStatus.BAD_REQUEST);
 		}
 

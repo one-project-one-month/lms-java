@@ -26,8 +26,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
         ApiResponseDTO<Object> apiResponse = new ApiResponseDTO<>(
                 "Unauthorized",
-                "You are not authorized to access this resource.",
-                request.getRequestURI()
+                "You are not authorized to access this resource."
+//                request.getRequestURI()
         );
 
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));

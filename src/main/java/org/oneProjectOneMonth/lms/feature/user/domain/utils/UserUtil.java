@@ -3,10 +3,14 @@ package org.oneProjectOneMonth.lms.feature.user.domain.utils;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.oneProjectOneMonth.lms.feature.instructor.domain.model.Instructor;
+import org.oneProjectOneMonth.lms.feature.instructor.domain.repository.InstructorRepository;
+import org.oneProjectOneMonth.lms.feature.role.domain.model.RoleName;
 import org.oneProjectOneMonth.lms.feature.user.domain.dto.UserDto;
 import org.oneProjectOneMonth.lms.feature.user.domain.model.User;
 import org.oneProjectOneMonth.lms.feature.user.domain.repository.UserRepository;
 import org.oneProjectOneMonth.lms.config.utils.DtoUtil;
+import org.oneProjectOneMonth.lms.feature.user.domain.response.CreateUserResponse;
 import org.oneProjectOneMonth.lms.security.service.JwtService;
 import org.springframework.stereotype.Component;
 
@@ -19,18 +23,25 @@ public class UserUtil {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
+    private final InstructorRepository instructorRepository;
 
-    public UserUtil(JwtService jwtService, UserRepository userRepository, ModelMapper modelMapper) {
+    public UserUtil(JwtService jwtService, UserRepository userRepository, InstructorRepository instructorRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-        this.modelMapper = modelMapper;
+        this.instructorRepository = instructorRepository;
     }
 
-    public UserDto getCurrentUserDto(String authHeader) {
+    public CreateUserResponse getCurrentUserResponse(String authHeader) {
         String email = extractEmailFromToken(authHeader);
         User user = findUserByEmail(email);
-        return DtoUtil.map(user, UserDto.class, modelMapper);
+
+        Instructor instructor = null;
+
+        if (user.getRoles().stream().anyMatch(role -> role.getName().equals(RoleName.INSTRUCTOR))) {
+            instructor = instructorRepository.findByUser(user).orElse(null);
+        }
+
+        return CreateUserResponse.fromUser(user, instructor);
     }
 
     public String extractEmailFromToken(String authHeader) {

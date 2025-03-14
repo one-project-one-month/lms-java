@@ -1,5 +1,6 @@
 package org.oneProjectOneMonth.lms.feature.enrollment.api;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.oneProjectOneMonth.lms.feature.enrollment.domain.dto.EnrollmentRequestDto;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/${api.base.path}/${api.enrollment.base.path}")
+@Tag(name = "Enrollment", description = "Enrollment API")
 @RequiredArgsConstructor
 @Slf4j
 public class EnrollmentController {

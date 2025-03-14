@@ -35,9 +35,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "role_id", nullable = false)
-    private Long roleId;
-
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "user_roles",
