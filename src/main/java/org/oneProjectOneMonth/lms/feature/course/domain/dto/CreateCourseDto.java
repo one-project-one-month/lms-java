@@ -50,7 +50,7 @@ public class CreateCourseDto {
     private BigDecimal currentPrice;
 
     @NotNull(message = "Course Category is required")
-    private Category category;
+    private String category;
 
     @NotEmpty
     private LocalDateTime createdAt;
