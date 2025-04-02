@@ -49,22 +49,129 @@ LMS တွင် ပါဝင်သော Table များ
 
 Description
 
-ကိုလင်းရဲ့ ဦးဆောင်မှုဖြင့် Learning Management System လေးကို တစ်လအတွင်း ရေးကြမယ်ဆိုပြီး စီစဥ်ခဲ့ကြပါတယ်။ ဒီ System လေးရဲ့ အဓိက ရည်ရွယ်ချက်တော့ သင်ကြားသူတွေရော ဆရာတွေပါ အဆင်ပြေစေမဲ့ learning platform တစ်ခု တည်ဆောင်ခြင်း ပဲဖြစ်ပါတယ်။ သင်ကြားသူတွေအနေနဲ့ course တွေကို အလွယ် တကူ category အလိုက်ရှာလို့ရမှာဖြစ်တဲ့အတွက် ကိုယ်လိုချင်တဲ့ course ကို enroll မြန်မြန် ဆန်ဆန် လုပ်လို့ရပါတယ်။ Instructor တွေကလဲ ကိုယ်သင်ချင်တဲ့ course တွေကို platform ပေါ်တင်ပြီး management လုပ်လို့ရပါတယ်။
+Learning Management System လေးကို တစ်လအတွင်း ရေးကြမယ်ဆိုပြီး စီစဥ်ခဲ့ကြပါတယ်။ ဒီ System လေးရဲ့ အဓိက ရည်ရွယ်ချက်တော့ သင်ကြားသူတွေရော ဆရာတွေပါ အဆင်ပြေစေမဲ့ learning platform တစ်ခု တည်ဆောင်ခြင်း ပဲဖြစ်ပါတယ်။ သင်ကြားသူတွေအနေနဲ့ course တွေကို အလွယ် တကူ category အလိုက်ရှာလို့ရမှာဖြစ်တဲ့အတွက် ကိုယ်လိုချင်တဲ့ course ကို enroll မြန်မြန် ဆန်ဆန် လုပ်လို့ရပါတယ်။ Instructor တွေကလဲ ကိုယ်သင်ချင်တဲ့ course တွေကို platform ပေါ်တင်ပြီး management လုပ်လို့ရပါတယ်။
+
+
+## Project တွင်ပါဝင်သော Table များ
+
 
 ### User
 > User အချက်အလက်များသိမ်းရန်၊ Instructor, Student, Admin တို့ဖြင့် ချိတ်ဆက်ရန်
 
 ```
-  user_Id       Int    
-  username      String   
-  email         String 
-  password      String   
-  phone         String   
-  dob           DateTime  
-  address       String
-  image_url     String
-  role_id       Int
-  is_available  Boolean
-  created_at    DateTime
-  updated_at    DateTime
+  user_Id        int    
+  username       String   
+  email          String 
+  password       String   
+  phone          String   
+  dob            DateTime  
+  address        String
+  image_url      String
+  role_id        Int
+  is_available   boolean
+  created_at     DateTime
+  updated_at     DateTime
 ```
+
+### Student
+> Student အချက်အလက်များသိမ်းရန်၊ User ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  student_Id        int    
+  name              String   
+```
+
+### Instructor
+> Instructor အချက်အလက်များသိမ်းရန်၊ User ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  instructor_Id     int    
+  nrc               String
+  edu_background    String
+```
+
+### Admin
+> Admin အချက်အလက်များသိမ်းရန်၊ User ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  id     int    
+```
+
+### Token
+> Refresh Token အချက်အလက်များသိမ်းရန်၊ User ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  token_Id       int    
+  user_Id        int
+  token          String
+  started_date   DateTime
+  expired_date   DateTime
+```
+
+### Category
+> Category အချက်အလက်များသိမ်းရန်၊ Course ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  category_Id      int    
+  course_Id        int
+  name             String
+```
+
+### Enrollment
+> Enrollment အချက်အလက်များသိမ်းရန်၊ User,Course တို့ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  enrollment_id    int
+  user_Id          int    
+  course_Id        int
+  name             String
+```
+
+### Course
+> Course အချက်အလက်များသိမ်းရန်၊ Instructor,Socail Link,Category တို့ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  course_id          int
+  instructor_Id      int    
+  course_name        int
+  thumbnail          String
+  is_available       boolean
+  type               String
+  level              String
+  social_link_id     String
+  description        String
+  duration           DateTime
+  original_price     int
+  current_price      int
+  category_id        int
+  created_at         DateTime
+  updated_at         DateTime
+```
+
+### Lesson
+> Lesson အချက်အလက်များသိမ်းရန်၊ Course ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  lesson_id          int
+  course_Id          int    
+  title              String
+  video_url          String
+  lesson_detail      String
+  is_available       boolean
+  created_at         DateTime
+  updated_at         DateTime
+```
+
+### Social Link
+> Social Link အချက်အလက်များသိမ်းရန်၊ Course ဖြင့် ချိတ်ဆက်ရန်
+
+```
+  social_id          int
+  course_Id          int    
+  facebook           String
+  x                  String
+  telegram           String
+  phone              String
+  email              String
+```
+
